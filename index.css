@@ -1,0 +1,49 @@
+﻿:root {
+    --col-background: #FFFFFF;
+    --col-popup: black;
+    --col-popup-txt: #FFFFFF;
+    --col-txt: black;
+    --col-border: black;
+    --col-InfoDisplay: rgba(255,255,255,0.98);
+    --col-InfoDisplay-VisBack: rgba(255,255,255,0.03);
+    --size-h1: calc(15px + 20 * ((53vw + 53vh) - 600px) / 820);
+    --size-h1-manual: calc(7px + 11 * ((53vw + 53vh) - 600px) / 820);
+    --size-h2: calc(15px + 20 * ((53vw + 53vh) - 600px) / 820);
+    --size-h3: calc(6px + 10 * ((53vw + 53vh) - 600px) / 820);
+    --size-h4: calc(8px + 12 * ((53vw + 53vh) - 600px) / 820);
+    --size-p-info: calc(5px + 12 * ((53vw + 53vh) - 600px) / 820);
+    --size-p-landing: calc(7px + 10 * ((53vw + 53vh) - 600px) / 820);
+    --size-p-popup: calc(7px + 10 * ((53vw + 53vh) - 600px) / 820);
+}
+
+
+* {
+    margin: 0;
+    padding: 0;
+    text-decoration: none;
+    user-select: none;
+    font-family: Arial;
+    color: var(--col-txt);
+    font-size: var(--size-p-landing);
+}
+html, body {
+    width: 100%;
+    height: 100%;
+    background-color: var(--col-background);
+    display: flex;
+}
+body{
+    position: relative;
+}
+
+section {
+    width: 50%;
+    height: 100%;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    overflow: hidden;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center;
+}

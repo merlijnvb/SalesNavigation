@@ -1,0 +1,130 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>Sales Converter</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+    <section style="background: red;">
+        <input type="file" id="inputt" />
+        <button onclick="SHOWSHOW()">OKEEE DAN</button>
+    </section>
+    <section id="SHOWINGOFF"></section>
+
+</body>
+</html>
+
+<script type="module">
+    import * as cv from "@techstark/opencv-js";
+
+    function SHOWSHOW() {
+        FileName = document.getElementById('inputt').value.slice(12, document.getElementById('inputt').value.length);
+
+        let IMGNAME = 'SALESNAVPREV2.png';
+        document.getElementById('SHOWINGOFF').style.backgroundImage = `url(${IMGNAME})`;
+    }
+
+    function MakeImages(FileName) {
+        let bgr_img = cv.imread(FileName);
+        let gray_img = new cv.Mat();
+        let hsv_img = new cv.Mat();
+        cv.cvtColor(bgr_img, gray_img, cv.COLOR_BGR2GRAY);
+        cv.cvtColor(bgr_img, hsv_img, cv.COLOR_BGR2HSV);
+
+        return { bgr_img, gray_img, hsv_img };
+    }
+
+    let { bgr_img, gray_img, hsv_img } = MakeImages('SALESNAVPREV1.png');
+
+    cv.inRange(gray_img, new cv.Mat(gray_img.rows, gray_img.cols, gray_img.type(), [0]), new cv.Mat(gray_img.rows, gray_img.cols, gray_img.type(), [245]), gray_img);
+    let gray_img_edges = new cv.Mat();
+    cv.Canny(gray_img, gray_img_edges, 100, 200);
+    let contours = new cv.MatVector();
+    let hierarchy = new cv.Mat();
+    cv.findContours(gray_img_edges, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+
+    let contour_lengths = [];
+    for (let i = 0; i < contours.size(); i++) {
+        contour_lengths.push(cv.arcLength(contours.get(i), true));
+    }
+
+    let contour_length_max = Math.max(...contour_lengths) * 0.7;
+    let contour_length_min = Math.max(...contour_lengths) * 0.4;
+
+    let gray_img_long_contours = [];
+    for (let i = 0; i < contours.size(); i++) {
+        let length = cv.arcLength(contours.get(i), true);
+        if (length < contour_length_max && length > contour_length_min) {
+            gray_img_long_contours.push(contours.get(i));
+        }
+    }
+
+    let ContactsField_contour_index = gray_img_long_contours.map(contour => cv.contourArea(contour)).indexOf(Math.max(...gray_img_long_contours.map(contour => cv.contourArea(contour))));
+
+    let rect = cv.boundingRect(gray_img_long_contours[ContactsField_contour_index]);
+    let x = rect.x, y = rect.y, w = rect.width, h = rect.height;
+
+    let width_factor = 0.7;
+    bgr_img = bgr_img.roi(new cv.Rect(x, y, Math.floor(w * width_factor), h));
+    gray_img = gray_img.roi(new cv.Rect(x, y, Math.floor(w * width_factor), h));
+    hsv_img = hsv_img.roi(new cv.Rect(x, y, Math.floor(w * width_factor), h));
+
+    let trgt_color_rgb = new cv.Mat(1, 1, cv.CV_8UC3, [0, 155, 177]);
+    let trgt_color_hsv = new cv.Mat();
+    cv.cvtColor(trgt_color_rgb, trgt_color_hsv, cv.COLOR_RGB2HSV);
+    let hsv_lower_bound = new cv.Mat(1, 1, cv.CV_8UC3, [trgt_color_hsv.data[0] - 20, trgt_color_hsv.data[1], trgt_color_hsv.data[2]]);
+    let hsv_upper_bound = new cv.Mat(1, 1, cv.CV_8UC3, [trgt_color_hsv.data[0] + 20, trgt_color_hsv.data[1], trgt_color_hsv.data[2]]);
+
+    let ContactNames = new cv.Mat();
+    cv.inRange(hsv_img, hsv_lower_bound, hsv_upper_bound, ContactNames);
+    let ContactNames_edges = new cv.Mat();
+    cv.Canny(ContactNames, ContactNames_edges, 0, 500);
+    let ContactNames_contours = new cv.MatVector();
+    cv.findContours(ContactNames_edges, ContactNames_contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+
+    let zeros_image_ContactNames = new cv.Mat.zeros(hsv_img.rows, hsv_img.cols, cv.CV_8UC3);
+    cv.drawContours(zeros_image_ContactNames, ContactNames_contours, -1, new cv.Scalar(255, 255, 255), 1);
+    let WhitePixels_ContactNames = [];
+    for (let i = 0; i < zeros_image_ContactNames.rows; i++) {
+        for (let j = 0; j < zeros_image_ContactNames.cols; j++) {
+            if (zeros_image_ContactNames.ucharPtr(i, j)[0] === 255) {
+                WhitePixels_ContactNames.push([i, j]);
+            }
+        }
+    }
+
+    function getContactNameElementIDs(WhitePixel_Array) {
+        let ID_List = [WhitePixel_Array[0]];
+
+        for (let i = 1; i < WhitePixel_Array.length; i++) {
+            if (WhitePixel_Array[i][0] - WhitePixel_Array[i - 1][0] > 100) {
+                ID_List.push(WhitePixel_Array[i]);
+            }
+        }
+
+        return ID_List;
+    }
+
+    let ContactNames_Y = getContactNameElementIDs(WhitePixels_ContactNames.map(pixel => pixel[0]));
+    let LineHeight = Math.max(...WhitePixels_ContactNames.map(pixel => pixel[0])) - ContactNames_Y[ContactNames_Y.length - 1];
+    let ContactNames_Xmin = Math.min(...WhitePixels_ContactNames.map(pixel => pixel[1])) - 10;
+    let ContactNames_Xmax = zeros_image_ContactNames.cols;
+
+    let zeros_image_ContentSection = new cv.Mat.zeros(zeros_image_ContactNames.rows, zeros_image_ContactNames.cols, cv.CV_8UC3);
+
+    for (let pixelY of ContactNames_Y) {
+        cv.rectangle(zeros_image_ContentSection, new cv.Point(ContactNames_Xmin, pixelY), new cv.Point(ContactNames_Xmax, pixelY + Math.floor(2.5 * LineHeight)), new cv.Scalar(255, 255, 255), -1);
+    }
+
+    //let ContentSection = new cv.Mat();
+    //cv.cvtColor(zeros_image_ContentSection.mul(bgr_img), ContentSection, cv.COLOR_BGR2GRAY);
+
+    //cv.imshow('Image Mask', ContentSection);
+    //cv.waitKey(0);
+    //cv.destroyAllWindows();
+
+
+</script>
