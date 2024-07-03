@@ -1,130 +1,247 @@
-﻿<!DOCTYPE html>
-
-<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+﻿<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <meta charset="utf-8" />
-    <title>Sales Converter</title>
+    <title>Sales Navigation</title>
     <link rel="stylesheet" href="index.css">
+    <script src="https://cdn.jsdelivr.net/gh/wallat/compiled-opencvjs/v4.2.0/opencv.js" async type="text/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.1/dist/tesseract.min.js"></script>
 </head>
-
 <body>
-    <section style="background: red;">
-        <input type="file" id="inputt" />
-        <button onclick="SHOWSHOW()">OKEEE DAN</button>
+    <h1 id="LightModus" onclick="changeLightModus('dark')">Sales Navigation</h1>
+    <section id="Images"><h2 id="CrtlPlaceholder">Crtl + V / Cmnd + V</h2></section>
+    <section id="Controls">
+        <button onclick="conversion()">Convert</button>
     </section>
-    <section id="SHOWINGOFF"></section>
-
 </body>
 </html>
 
-<script type="module">
-    import * as cv from "@techstark/opencv-js";
-
-    function SHOWSHOW() {
-        FileName = document.getElementById('inputt').value.slice(12, document.getElementById('inputt').value.length);
-
-        let IMGNAME = 'SALESNAVPREV2.png';
-        document.getElementById('SHOWINGOFF').style.backgroundImage = `url(${IMGNAME})`;
+<script>
+    let ScrnShotCounter = 0;
+    //CHECK IF BROWSER COLOR SCHEME IS SET TO DARK: IF SO SET WEBPAGE COLOR SCHEME ALSO TO BLACK
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        changeLightModus('dark');
     }
 
-    function MakeImages(FileName) {
-        let bgr_img = cv.imread(FileName);
-        let gray_img = new cv.Mat();
-        let hsv_img = new cv.Mat();
-        cv.cvtColor(bgr_img, gray_img, cv.COLOR_BGR2GRAY);
-        cv.cvtColor(bgr_img, hsv_img, cv.COLOR_BGR2HSV);
+    //LIGHT MODUS CHANGE FUNCTION: WITH 'MODUS' = 'dark' OR 'light' AS INPUT;
+    function changeLightModus(modus) {
+        switch (modus) {
+            case 'dark':
+                //CHANGE INPUT STATUS TO LIGHT MODUS ON BUTTON
+                document.getElementById('LightModus').setAttribute("onclick", "changeLightModus('light')");
+                //CHANGE CSS GLOBAL VARIABLES TO DARK THEME
+                document.documentElement.style.setProperty("--col-background", 'black');
+                document.documentElement.style.setProperty("--col-popup", '#FFFFFF');
+                document.documentElement.style.setProperty("--col-popup-txt", 'black');
+                document.documentElement.style.setProperty("--col-txt", '#FFFFFF');
+                document.documentElement.style.setProperty("--col-border", '#FFFFFF');
+                document.documentElement.style.setProperty("--col-background-sub", '#141414');
+                document.documentElement.style.setProperty("--col-InfoDisplay-VisBack", 'rgba(0,0,0,0.03)');
 
-        return { bgr_img, gray_img, hsv_img };
-    }
+                break;
+            case 'light':
+                //CHANGE INPUT STATUS TO LIGHT MODUS ON BUTTON
+                document.getElementById('LightModus').setAttribute("onclick", "changeLightModus('dark')");
+                //CHANGE CSS GLOBAL VARIABLES TO DARK THEME
+                document.documentElement.style.setProperty("--col-background", '#FFFFFF');
+                document.documentElement.style.setProperty("--col-popup", 'black');
+                document.documentElement.style.setProperty("--col-popup-txt", '#FFFFFF');
+                document.documentElement.style.setProperty("--col-txt", 'black');
+                document.documentElement.style.setProperty("--col-border", 'black');
+                document.documentElement.style.setProperty("--col-background-sub", '#F5F5F5');
+                document.documentElement.style.setProperty("--col-InfoDisplay-VisBack", 'rgba(255,255,255,0.03)');
 
-    let { bgr_img, gray_img, hsv_img } = MakeImages('SALESNAVPREV1.png');
-
-    cv.inRange(gray_img, new cv.Mat(gray_img.rows, gray_img.cols, gray_img.type(), [0]), new cv.Mat(gray_img.rows, gray_img.cols, gray_img.type(), [245]), gray_img);
-    let gray_img_edges = new cv.Mat();
-    cv.Canny(gray_img, gray_img_edges, 100, 200);
-    let contours = new cv.MatVector();
-    let hierarchy = new cv.Mat();
-    cv.findContours(gray_img_edges, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
-
-    let contour_lengths = [];
-    for (let i = 0; i < contours.size(); i++) {
-        contour_lengths.push(cv.arcLength(contours.get(i), true));
-    }
-
-    let contour_length_max = Math.max(...contour_lengths) * 0.7;
-    let contour_length_min = Math.max(...contour_lengths) * 0.4;
-
-    let gray_img_long_contours = [];
-    for (let i = 0; i < contours.size(); i++) {
-        let length = cv.arcLength(contours.get(i), true);
-        if (length < contour_length_max && length > contour_length_min) {
-            gray_img_long_contours.push(contours.get(i));
+                break;
+            default:
+                //IF AN ERROR OCCURS IT SHOULD DEFAULT ITSELF TO LIGHT MODUS
+                changeLightModus('light');
         }
     }
 
-    let ContactsField_contour_index = gray_img_long_contours.map(contour => cv.contourArea(contour)).indexOf(Math.max(...gray_img_long_contours.map(contour => cv.contourArea(contour))));
+    window.addEventListener("paste", function (e) {
+        let item = Array.from(e.clipboardData.items).find(x => /^image\//.test(x.type));
+        const Placeholder = document.getElementById('CrtlPlaceholder');
 
-    let rect = cv.boundingRect(gray_img_long_contours[ContactsField_contour_index]);
-    let x = rect.x, y = rect.y, w = rect.width, h = rect.height;
+        if (Placeholder && item) {
+            Placeholder.remove();
+        }
 
-    let width_factor = 0.7;
-    bgr_img = bgr_img.roi(new cv.Rect(x, y, Math.floor(w * width_factor), h));
-    gray_img = gray_img.roi(new cv.Rect(x, y, Math.floor(w * width_factor), h));
-    hsv_img = hsv_img.roi(new cv.Rect(x, y, Math.floor(w * width_factor), h));
+        let blob = item.getAsFile();
+        let img = new Image();
 
-    let trgt_color_rgb = new cv.Mat(1, 1, cv.CV_8UC3, [0, 155, 177]);
-    let trgt_color_hsv = new cv.Mat();
-    cv.cvtColor(trgt_color_rgb, trgt_color_hsv, cv.COLOR_RGB2HSV);
-    let hsv_lower_bound = new cv.Mat(1, 1, cv.CV_8UC3, [trgt_color_hsv.data[0] - 20, trgt_color_hsv.data[1], trgt_color_hsv.data[2]]);
-    let hsv_upper_bound = new cv.Mat(1, 1, cv.CV_8UC3, [trgt_color_hsv.data[0] + 20, trgt_color_hsv.data[1], trgt_color_hsv.data[2]]);
+        img.onload = function () {
+            const ImageFolfderParent = document.getElementById('Images');
+            const ImageFolder = document.createElement('div');
+            const ScreenShotMask = document.createElement('canvas');
+            ImageFolder.setAttribute('class', 'ScreenShotFolder');
+            ImageFolder.setAttribute('ondblclick', `DeleteThisScrnShot('ScrnShot${ScrnShotCounter}')`);
 
-    let ContactNames = new cv.Mat();
-    cv.inRange(hsv_img, hsv_lower_bound, hsv_upper_bound, ContactNames);
-    let ContactNames_edges = new cv.Mat();
-    cv.Canny(ContactNames, ContactNames_edges, 0, 500);
-    let ContactNames_contours = new cv.MatVector();
-    cv.findContours(ContactNames_edges, ContactNames_contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+            ScreenShotMask.setAttribute('class', 'ScreenShotMask');
+            ScreenShotMask.setAttribute('id', `ScrnShotMask${ScrnShotCounter}`);
+            ScreenShotMask.style.display = 'none';
+            ScreenShotMask.setAttribute('onclick', `ShowMask(${ScrnShotCounter}, false)`);
 
-    let zeros_image_ContactNames = new cv.Mat.zeros(hsv_img.rows, hsv_img.cols, cv.CV_8UC3);
-    cv.drawContours(zeros_image_ContactNames, ContactNames_contours, -1, new cv.Scalar(255, 255, 255), 1);
-    let WhitePixels_ContactNames = [];
-    for (let i = 0; i < zeros_image_ContactNames.rows; i++) {
-        for (let j = 0; j < zeros_image_ContactNames.cols; j++) {
-            if (zeros_image_ContactNames.ucharPtr(i, j)[0] === 255) {
-                WhitePixels_ContactNames.push([i, j]);
+            this.id = `ScrnShotImage${ScrnShotCounter}`;
+            this.setAttribute('class', 'ScreenShotImage');
+            this.setAttribute('onclick', `ShowMask(${ScrnShotCounter}, true)`);
+            ImageFolfderParent.appendChild(ImageFolder);
+            ImageFolder.appendChild(this);
+            ImageFolder.appendChild(ScreenShotMask);
+        };
+
+        img.src = URL.createObjectURL(blob);
+        CreateMaskedImageFromBlob(blob).then(MatImage => {
+            let bgr_img = MatImage;
+            let gray_img = new cv.Mat();
+            cv.cvtColor(bgr_img, gray_img, cv.COLOR_RGBA2GRAY, 0);
+
+            // Apply the inRange function directly
+            cv.inRange(gray_img, new cv.Mat(gray_img.rows, gray_img.cols, cv.CV_8UC1, new cv.Scalar(0)), new cv.Mat(gray_img.rows, gray_img.cols, cv.CV_8UC1, new cv.Scalar(245)), gray_img);
+            cv.Canny(gray_img, gray_img, 50, 100, 3, false);
+
+            // Find contours
+            let contours = new cv.MatVector();
+            let hierarchy = new cv.Mat();
+            cv.findContours(gray_img, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE);
+
+            // Calculate contour lengths and find the largest contour within the specified range
+            let contour_lengths = [];
+            let contour_length_max = 0;
+            let contour_length_min = Infinity;
+            for (let i = 0; i < contours.size(); i++) {
+                let length = cv.arcLength(contours.get(i), true);
+                contour_lengths.push(length);
+                if (length > contour_length_max) contour_length_max = length;
+                if (length < contour_length_min) contour_length_min = length;
             }
-        }
-    }
+            contour_length_max *= 0.7;
+            contour_length_min *= 0.4;
 
-    function getContactNameElementIDs(WhitePixel_Array) {
-        let ID_List = [WhitePixel_Array[0]];
-
-        for (let i = 1; i < WhitePixel_Array.length; i++) {
-            if (WhitePixel_Array[i][0] - WhitePixel_Array[i - 1][0] > 100) {
-                ID_List.push(WhitePixel_Array[i]);
+            let NR = -1;
+            let highest_size = 0;
+            for (let i = 0; i < contours.size(); i++) {
+                let length = contour_lengths[i];
+                if (length < contour_length_max && length > contour_length_min) {
+                    let size = cv.contourArea(contours.get(i));
+                    if (size > highest_size) {
+                        highest_size = size;
+                        NR = i;
+                    }
+                }
             }
+
+            if (NR !== -1) {
+                bgr_img = bgr_img.roi(cv.boundingRect(contours.get(NR)));
+            }
+
+            let lowlow = new cv.Mat(bgr_img.rows, bgr_img.cols, bgr_img.type(), [0, 100, 150, 0]);
+            let highhigh = new cv.Mat(bgr_img.rows, bgr_img.cols, bgr_img.type(), [10, 150, 255, 255]);
+
+            let mask = new cv.Mat();
+            cv.inRange(bgr_img, lowlow, highhigh, mask);
+            cv.Canny(mask, mask, 50, 100, 3, false);
+
+            // Find contours again
+            let contours2 = new cv.MatVector();
+            let hierarchy2 = new cv.Mat();
+            cv.findContours(mask, contours2, hierarchy2, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE);
+
+            let dst = cv.Mat.zeros(mask.rows, mask.cols, mask.type());
+            cv.drawContours(dst, contours2, -1, new cv.Scalar(255), 1);
+
+            let ContactContentYLocs = [];
+            let ContactContentXLocs = [];
+            let previousRow = -1;
+
+            for (let row = 0; row < dst.rows; row++) {
+                for (let col = 0; col < dst.cols; col++) {
+                    if (dst.ucharPtr(row, col)[0] === 255) {
+                        if (previousRow === -1 || row - previousRow > 100) {
+                            ContactContentYLocs.push(row);
+                        }
+                        ContactContentXLocs.push(col);
+                        previousRow = row;
+                        break;
+                    }
+                }
+            }
+
+            let dst2 = cv.Mat.zeros(mask.rows, mask.cols, mask.type());
+            let resultz = cv.Mat.ones(mask.rows, mask.cols, mask.type());
+            const lineheight = previousRow - ContactContentYLocs.at(-1);
+
+            for (let i = 0; i < ContactContentYLocs.length; i++) {
+                let Ymin = ContactContentYLocs[i];
+                cv.rectangle(dst2, new cv.Point(Math.min(...ContactContentXLocs), Ymin), new cv.Point(Math.floor(dst2.size().width / 1.2), Ymin + Math.floor(lineheight * 1.5)), new cv.Scalar(255), -1);
+            }
+
+            bgr_img.copyTo(resultz, dst2);
+            cv.cvtColor(resultz, resultz, cv.COLOR_RGBA2GRAY, 0);
+
+            let Showcanvas = document.getElementById(`ScrnShotMask${ScrnShotCounter}`);
+            cv.imshow(Showcanvas, resultz);
+
+            // Clean up memory
+            gray_img.delete();
+            contours.delete();
+            hierarchy.delete();
+            contours2.delete();
+            hierarchy2.delete();
+            lowlow.delete();
+            highhigh.delete();
+            mask.delete();
+            dst.delete();
+            dst2.delete();
+            resultz.delete();
+
+            //cv.imshow(canvas, MatImage);
+        }).catch(err => {
+            console.error('Error:', err);
+        });
+
+        ScrnShotCounter++;
+    });
+
+    function DeleteThisScrnShot(ID) {
+        document.getElementById(ID).remove();
+        ScrnShotCounter--;
+
+        if (ScrnShotCounter == 0) {
+            const ImagesParent = document.getElementById('Images');
+            const Placeholder = document.createElement('h2');
+            Placeholder.id = 'CrtlPlaceholder';
+            Placeholder.innerText = 'Crtl + V / Cmnd + V';
+            ImagesParent.appendChild(Placeholder);
         }
-
-        return ID_List;
     }
 
-    let ContactNames_Y = getContactNameElementIDs(WhitePixels_ContactNames.map(pixel => pixel[0]));
-    let LineHeight = Math.max(...WhitePixels_ContactNames.map(pixel => pixel[0])) - ContactNames_Y[ContactNames_Y.length - 1];
-    let ContactNames_Xmin = Math.min(...WhitePixels_ContactNames.map(pixel => pixel[1])) - 10;
-    let ContactNames_Xmax = zeros_image_ContactNames.cols;
-
-    let zeros_image_ContentSection = new cv.Mat.zeros(zeros_image_ContactNames.rows, zeros_image_ContactNames.cols, cv.CV_8UC3);
-
-    for (let pixelY of ContactNames_Y) {
-        cv.rectangle(zeros_image_ContentSection, new cv.Point(ContactNames_Xmin, pixelY), new cv.Point(ContactNames_Xmax, pixelY + Math.floor(2.5 * LineHeight)), new cv.Scalar(255, 255, 255), -1);
+    async function CreateMaskedImageFromBlob(blob) {
+        return new Promise((resolve, reject) => {
+            let img = new Image();
+            img.src = URL.createObjectURL(blob);
+            img.onload = function () {
+                let canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                let ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, img.width, img.height);
+                let imgData = ctx.getImageData(0, 0, img.width, img.height);
+                let MatImage = cv.matFromImageData(imgData);
+                resolve(MatImage);
+            };
+            img.onerror = function (err) {
+                reject(err);
+            };
+        });
     }
 
-    //let ContentSection = new cv.Mat();
-    //cv.cvtColor(zeros_image_ContentSection.mul(bgr_img), ContentSection, cv.COLOR_BGR2GRAY);
-
-    //cv.imshow('Image Mask', ContentSection);
-    //cv.waitKey(0);
-    //cv.destroyAllWindows();
+    function ShowMask(ID, ImgStatus) {
+        if (ImgStatus) {
+            document.getElementById(`ScrnShotImage${ID}`).style.display = 'none';
+            document.getElementById(`ScrnShotMask${ID}`).style.display = 'unset';
+        } else {
+            document.getElementById(`ScrnShotImage${ID}`).style.display = 'unset';
+            document.getElementById(`ScrnShotMask${ID}`).style.display = 'none';
+        }
+    }
 
 
 </script>
