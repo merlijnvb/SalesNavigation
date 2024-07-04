@@ -7,6 +7,30 @@
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.1/dist/tesseract.min.js"></script>
 </head>
 <body>
+    <div class="InfoBtn" id="inactiveBtn" onclick="DisplayInfo()">i</div>
+    <span id="offWindowBtn" style="display: none;" onclick="DisplayInfo()"></span>
+    <section id="InfoDisplay" style="display: none;">
+        <div id="InfoDisText">
+            <div class="InfoContent" id="info_content_first">
+                <h2>Sales Navigation Manual</h2>
+                <h3>Basics:</h3>
+                <p>Screenshot your Sales Navigator & paste it inside this webpage. Click the convert button to convert your screenshots into raw contact data. The resulting text will be automatically copied to your clipboard.</p>
+            </div>
+            <div class="InfoContent" id="info_content_third">
+                <h3>Single & double click the image:</h3>
+                <p><b>When single clicking</b> the image you pasted you will see the masked image containing the information you will get in string format when clicking the convert button.</p>
+                <p><b>When double clicking</b> the image you pasted you will remove that image from your collection.</p>
+            </div>
+            <div class="InfoContent" id="info_content_second">
+                <h3>Set page theme:</h3>
+                <p>You can change your color mode by clicking on the title of the page</p>
+            </div>
+        </div>
+        <div id="InfoDisVis">
+
+        </div>
+    </section>
+
     <h1 id="LightModus" onclick="changeLightModus('dark')">Sales Navigation</h1>
     <section id="Images"><h2 id="CrtlPlaceholder">Crtl + V / Cmnd + V</h2></section>
     <section id="Controls">
@@ -30,12 +54,14 @@
                 document.getElementById('LightModus').setAttribute("onclick", "changeLightModus('light')");
                 //CHANGE CSS GLOBAL VARIABLES TO DARK THEME
                 document.documentElement.style.setProperty("--col-background", 'black');
+                document.documentElement.style.setProperty("--col-background-sub", '#141414');
                 document.documentElement.style.setProperty("--col-popup", '#FFFFFF');
                 document.documentElement.style.setProperty("--col-popup-txt", 'black');
                 document.documentElement.style.setProperty("--col-txt", '#FFFFFF');
                 document.documentElement.style.setProperty("--col-border", '#FFFFFF');
-                document.documentElement.style.setProperty("--col-background-sub", '#141414');
-                document.documentElement.style.setProperty("--col-InfoDisplay-VisBack", 'rgba(0,0,0,0.03)');
+                document.documentElement.style.setProperty("--col-InfoDisplay", 'rgba(255,255,255,0.98)');
+                document.documentElement.style.setProperty("--col-InfoDisplay-sub", 'rgba(0,0,0,0.03)');
+
 
                 break;
             case 'light':
@@ -43,12 +69,13 @@
                 document.getElementById('LightModus').setAttribute("onclick", "changeLightModus('dark')");
                 //CHANGE CSS GLOBAL VARIABLES TO DARK THEME
                 document.documentElement.style.setProperty("--col-background", '#FFFFFF');
+                document.documentElement.style.setProperty("--col-background-sub", '#F5F5F5');
                 document.documentElement.style.setProperty("--col-popup", 'black');
                 document.documentElement.style.setProperty("--col-popup-txt", '#FFFFFF');
                 document.documentElement.style.setProperty("--col-txt", 'black');
                 document.documentElement.style.setProperty("--col-border", 'black');
-                document.documentElement.style.setProperty("--col-background-sub", '#F5F5F5');
-                document.documentElement.style.setProperty("--col-InfoDisplay-VisBack", 'rgba(255,255,255,0.03)');
+                document.documentElement.style.setProperty("--col-InfoDisplay", 'rgba(0,0,0,0.98)');
+                document.documentElement.style.setProperty("--col-InfoDisplay-sub", 'rgba(255,255,255,0.03)');
 
                 break;
             default:
@@ -61,6 +88,15 @@
         let item = Array.from(e.clipboardData.items).find(x => /^image\//.test(x.type));
         const Placeholder = document.getElementById('CrtlPlaceholder');
 
+
+        let ID;
+        if (OlderImageBool) {
+            OlderImageBool = false;
+            ID = ScrnShotCounter - OlderImageDist;
+        } else {
+            ID = ScrnShotCounter;
+        }
+
         if (Placeholder && item) {
             Placeholder.remove();
         }
@@ -69,7 +105,7 @@
         let img = new Image();
 
         img.onload = function () {
-            CreateImageFolderElements(this);
+            CreateImageFolderElements(this, ID);
         };
 
         img.src = URL.createObjectURL(blob);
@@ -161,7 +197,7 @@
             bgr_img.copyTo(resultz, dst2);
             cv.cvtColor(resultz, resultz, cv.COLOR_RGBA2GRAY, 0);
 
-            let Showcanvas = document.getElementById(`ScrnShotMask${ScrnShotCounter}`);
+            let Showcanvas = document.getElementById(`ScrnShotMask${ID}`);
             cv.imshow(Showcanvas, resultz);
 
             // Clean up memory
@@ -188,14 +224,7 @@
     let OlderImageBool = false;
     let OlderImageDist = 0;
 
-    function CreateImageFolderElements(New_ScrnShtElement) {
-        let ID;
-        if (OlderImageBool) {
-            OlderImageBool = false;
-            ID = ScrnShotCounter - OlderImageDist;
-        } else {
-            ID = ScrnShotCounter;
-        }
+    function CreateImageFolderElements(New_ScrnShtElement, ID) {
         const ImageFolfderParent = document.getElementById('Images');
         const ImageFolder = document.createElement('div');
         const ScreenShotMask = document.createElement('canvas');
@@ -262,6 +291,20 @@
         } else {
             document.getElementById(`ScrnShotImage${ID}`).style.display = 'unset';
             document.getElementById(`ScrnShotMask${ID}`).style.display = 'none';
+        }
+    }
+
+    function DisplayInfo() {
+        let InfoStatus = document.getElementsByClassName('InfoBtn')[0].id;
+
+        if (InfoStatus == 'inactiveBtn') {
+            document.getElementsByClassName('InfoBtn')[0].id = 'activeBtn';
+            document.getElementById('InfoDisplay').style.display = 'unset';
+            document.getElementById('offWindowBtn').style.display = 'unset';
+        } else {
+            document.getElementsByClassName('InfoBtn')[0].id = 'inactiveBtn';
+            document.getElementById('InfoDisplay').style.display = 'none';
+            document.getElementById('offWindowBtn').style.display = 'none';
         }
     }
 
