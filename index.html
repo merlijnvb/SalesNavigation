@@ -32,7 +32,7 @@
         </div>
     </section>
 
-    <h1 id="LightModus" onclick="changeLightModus('dark')">Sales Navigation</h1>
+    <h1 id="LightModus" onclick="changeLightModus('dark')" ondblclick="changeWorkModus('ScrnTxt')">Sales Navigation</h1> <!-- ScrnSafe -->
     <section id="Images"><h2 id="CrtlPlaceholder">Crtl + V / Cmnd + V</h2></section>
     <section id="Controls">
         <button onclick="conversion()">Convert</button>
@@ -370,14 +370,21 @@
 
 
         let txt = [];
-        extractTextFromCanvas(Canvases[0]).then(text => {
-            const outputString = ImageStringtoArray(text);
-            txt.push(outputString);
-            console.log(outputString);
-        });
+        let promises = [];
 
-        navigator.clipboard.writeText(txt);
-        PopUpWindow('All contact info from the screenshots are copied to your clipboard');
+        for (let i = 0; i < Canvases.length; i++) {
+            promises.push(
+                extractTextFromCanvas(Canvases[i]).then(text => {
+                    const outputString = ImageStringtoArray(text);
+                    txt.push(outputString);
+                })
+            );
+        }
+
+        Promise.all(promises).then(() => {
+            navigator.clipboard.writeText(txt.join('\n'));
+            PopUpWindow('All contact info from the screenshots are copied to your clipboard');
+        });
     }
 
 </script>
