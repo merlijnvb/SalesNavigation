@@ -2,6 +2,7 @@
 <head>
     <title>Sales Navigation</title>
     <link rel="stylesheet" href="index.css">
+    <link rel="icon" type="image/x-icon" href="SaleNav.ico">
     <script src="https://cdn.jsdelivr.net/gh/wallat/compiled-opencvjs/v4.2.0/opencv.js" async type="text/javascript"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.1/dist/tesseract.min.js"></script>
 </head>
@@ -68,23 +69,7 @@
         let img = new Image();
 
         img.onload = function () {
-            const ImageFolfderParent = document.getElementById('Images');
-            const ImageFolder = document.createElement('div');
-            const ScreenShotMask = document.createElement('canvas');
-            ImageFolder.setAttribute('class', 'ScreenShotFolder');
-            ImageFolder.setAttribute('ondblclick', `DeleteThisScrnShot('ScrnShot${ScrnShotCounter}')`);
-
-            ScreenShotMask.setAttribute('class', 'ScreenShotMask');
-            ScreenShotMask.setAttribute('id', `ScrnShotMask${ScrnShotCounter}`);
-            ScreenShotMask.style.display = 'none';
-            ScreenShotMask.setAttribute('onclick', `ShowMask(${ScrnShotCounter}, false)`);
-
-            this.id = `ScrnShotImage${ScrnShotCounter}`;
-            this.setAttribute('class', 'ScreenShotImage');
-            this.setAttribute('onclick', `ShowMask(${ScrnShotCounter}, true)`);
-            ImageFolfderParent.appendChild(ImageFolder);
-            ImageFolder.appendChild(this);
-            ImageFolder.appendChild(ScreenShotMask);
+            CreateImageFolderElements(this);
         };
 
         img.src = URL.createObjectURL(blob);
@@ -200,7 +185,44 @@
         ScrnShotCounter++;
     });
 
+    let OlderImageBool = false;
+    let OlderImageDist = 0;
+
+    function CreateImageFolderElements(New_ScrnShtElement) {
+        let ID;
+        if (OlderImageBool) {
+            OlderImageBool = false;
+            ID = ScrnShotCounter - OlderImageDist;
+        } else {
+            ID = ScrnShotCounter;
+        }
+        const ImageFolfderParent = document.getElementById('Images');
+        const ImageFolder = document.createElement('div');
+        const ScreenShotMask = document.createElement('canvas');
+        ImageFolder.setAttribute('class', 'ScreenShotFolder');
+        ImageFolder.setAttribute('id', `ScrnShotFolder${ID}`);
+        ImageFolder.setAttribute('ondblclick', `DeleteThisScrnShot('ScrnShotFolder${ID}')`);
+
+        ScreenShotMask.setAttribute('class', 'ScreenShotMask');
+        ScreenShotMask.setAttribute('id', `ScrnShotMask${ID}`);
+        ScreenShotMask.style.display = 'none';
+        ScreenShotMask.setAttribute('onclick', `ShowMask(${ID}, false)`);
+
+        New_ScrnShtElement.id = `ScrnShotImage${ID}`;
+        New_ScrnShtElement.setAttribute('class', 'ScreenShotImage');
+        New_ScrnShtElement.setAttribute('onclick', `ShowMask(${ID}, true)`);
+        ImageFolfderParent.appendChild(ImageFolder);
+        ImageFolder.appendChild(ScreenShotMask);
+        ImageFolder.appendChild(New_ScrnShtElement);
+
+    }
+
     function DeleteThisScrnShot(ID) {
+        const ID_short = ID.slice(-1);
+        if (ID_short < ScrnShotCounter) {
+            OlderImageBool = true;
+            OlderImageDist = ScrnShotCounter - ID_short;
+        } 
         document.getElementById(ID).remove();
         ScrnShotCounter--;
 
@@ -243,5 +265,19 @@
         }
     }
 
+    function conversion() {
+        const Canvases = document.getElementsByClassName('ScreenShotImage');
+
+        for (let i = 0; i < Canvases.length; i++) {
+            let img = new Image();
+            let canvas = Canvases[0];
+            canvas.width = img.width;
+            canvas.height = img.height;
+            let ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, img.width, img.height);
+            let imgData = ctx.getImageData(0, 0, img.width, img.height);
+            console.log(Canvases[i].id);
+        }
+    }
 
 </script>
