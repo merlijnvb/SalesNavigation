@@ -101,6 +101,41 @@
         }
     }
 
+    function findCloseValues(arr, rangeValue, WantDupes = false) {
+        arr.sort((a, b) => a - b);
+        let closeValues = [];
+        let currentGroup = [arr[0]];
+
+        for (let i = 1; i < arr.length; i++) {
+            if (arr[i] - arr[i - 1] <= rangeValue) {
+                currentGroup.push(arr[i]);
+                if (currentGroup.length === 2) {
+                    if (currentGroup[0] !== currentGroup[1] || WantDupes) {
+                        closeValues.push([...currentGroup]);
+                    }
+                    currentGroup = [arr[i]];
+                }
+            } else {
+                currentGroup = [arr[i]];
+            }
+        }
+
+        return closeValues;
+    }
+
+    function findIndexesOfRepeatedValue(arr, value) {
+        let indexes = [];
+
+        // Iterate through the array to find indexes of the repeated value
+        for (let i = 0; i < arr.length; i++) {
+            if (arr[i] === value) {
+                indexes.push(i);
+            }
+        }
+
+        return indexes;
+    }
+
     window.addEventListener("paste", function (e) {
         let item = Array.from(e.clipboardData.items).find(x => /^image\//.test(x.type));
         const Placeholder = document.getElementById('CrtlPlaceholder');
@@ -131,106 +166,91 @@
             let gray_img = new cv.Mat();
             cv.cvtColor(bgr_img, gray_img, cv.COLOR_RGBA2GRAY, 0);
 
-            // Apply the inRange function directly
-            cv.inRange(gray_img, new cv.Mat(gray_img.rows, gray_img.cols, cv.CV_8UC1, new cv.Scalar(0)), new cv.Mat(gray_img.rows, gray_img.cols, cv.CV_8UC1, new cv.Scalar(245)), gray_img);
-            cv.Canny(gray_img, gray_img, 50, 100, 3, false);
+            // Apply edge detection with different thresholds
+            let edges1 = new cv.Mat();
+            let edges2 = new cv.Mat();
+            cv.Canny(gray_img, edges1, 0, 255, 3);
+            cv.Canny(gray_img, edges2, 0, 145, 3);
 
-            // Find contours
+            // Subtract the edge images
+            let result = new cv.Mat();
+            cv.subtract(edges2, edges1, result);
+
+            // Detect vertical lines using morphological operations
+            let kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(1, 40));
+            let verticalLines = new cv.Mat();
+            cv.morphologyEx(result, verticalLines, cv.MORPH_OPEN, kernel);
+
+            // Find contours and extract x-coordinates
             let contours = new cv.MatVector();
             let hierarchy = new cv.Mat();
-            cv.findContours(gray_img, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE);
+            cv.findContours(verticalLines, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 
-            // Calculate contour lengths and find the largest contour within the specified range
-            let contour_lengths = [];
-            let contour_length_max = 0;
-            let contour_length_min = Infinity;
+            let xCoordinates = [];
             for (let i = 0; i < contours.size(); i++) {
-                let length = cv.arcLength(contours.get(i), true);
-                contour_lengths.push(length);
-                if (length > contour_length_max) contour_length_max = length;
-                if (length < contour_length_min) contour_length_min = length;
-            }
-            contour_length_max *= 0.7;
-            contour_length_min *= 0.4;
-
-            let NR = -1;
-            let highest_size = 0;
-            for (let i = 0; i < contours.size(); i++) {
-                let length = contour_lengths[i];
-                if (length < contour_length_max && length > contour_length_min) {
-                    let size = cv.contourArea(contours.get(i));
-                    if (size > highest_size) {
-                        highest_size = size;
-                        NR = i;
-                    }
-                }
+                let boundingRect = cv.boundingRect(contours.get(i));
+                xCoordinates.push(boundingRect.x);
             }
 
-            if (NR !== -1) {
-                bgr_img = bgr_img.roi(cv.boundingRect(contours.get(NR)));
+            // Find the contact window coordinates
+            const closeValues = findCloseValues(xCoordinates, 5, false);
+            const X1_Contact_Window = closeValues[0][0];
+            const X2_Contact_Window = closeValues.at(-1)[1];
+
+            // Crop the image based on the contact window
+            let rect = new cv.Rect(X1_Contact_Window, 0, X2_Contact_Window - X1_Contact_Window, gray_img.rows);
+            let cropped = gray_img.roi(rect);
+            let cropped_bgr = bgr_img.roi(rect);
+
+            // Apply GaussianBlur to reduce noise
+            let blurred_img = new cv.Mat();
+            cv.GaussianBlur(cropped, blurred_img, new cv.Size(9, 9), 2, 2);
+
+            // Detect circles using HoughCircles
+            let circles = new cv.Mat();
+            cv.HoughCircles(blurred_img, circles, cv.HOUGH_GRADIENT, 1, blurred_img.rows / 16, 100, 30, 10, 100);
+
+            // Extract circle centroids
+            let Xs = [], Ys = [];
+            for (let i = 0; i < circles.cols; ++i) {
+                Xs.push(circles.data32F[i * 3]);
+                Ys.push(circles.data32F[i * 3 + 1]);
             }
 
-            let lowlow = new cv.Mat(bgr_img.rows, bgr_img.cols, bgr_img.type(), [0, 100, 150, 0]);
-            let highhigh = new cv.Mat(bgr_img.rows, bgr_img.cols, bgr_img.type(), [10, 150, 255, 255]);
+            // Find repeated x and y coordinates
+            let Xrepeated = findCloseValues(Xs, 2, true);
+            let Yrepeated = findCloseValues(Ys, 25);
+            const WidthFactor = 3 / 4;
+            const HeightFactor = 2.5;
 
-            let mask = new cv.Mat();
-            cv.inRange(bgr_img, lowlow, highhigh, mask);
-            cv.Canny(mask, mask, 50, 100, 3, false);
+            // Calculate line height and create content sections
+            let LineHeight = (parseInt(Yrepeated[1]) - parseInt(Yrepeated[0])) / HeightFactor;
+            let ContentSections = new cv.Mat.zeros(cropped_bgr.rows, cropped_bgr.cols, cropped_bgr.type());
 
-            // Find contours again
-            let contours2 = new cv.MatVector();
-            let hierarchy2 = new cv.Mat();
-            cv.findContours(mask, contours2, hierarchy2, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE);
-
-            let dst = cv.Mat.zeros(mask.rows, mask.cols, mask.type());
-            cv.drawContours(dst, contours2, -1, new cv.Scalar(255), 1);
-
-            let ContactContentYLocs = [];
-            let ContactContentXLocs = [];
-            let previousRow = -1;
-
-            for (let row = 0; row < dst.rows; row++) {
-                for (let col = 0; col < dst.cols; col++) {
-                    if (dst.ucharPtr(row, col)[0] === 255) {
-                        if (previousRow === -1 || row - previousRow > 100) {
-                            ContactContentYLocs.push(row);
-                        }
-                        ContactContentXLocs.push(col);
-                        previousRow = row;
-                        break;
-                    }
-                }
+            for (let j = 0; j < Yrepeated.length; j++) {
+                let p1 = new cv.Point(parseInt(Xrepeated[0][0]), parseInt(Yrepeated[j][0]));
+                let p2 = new cv.Point(parseInt(Xrepeated.at(-1)[1]) * WidthFactor, parseInt(Yrepeated[j][0]));
+                cv.line(ContentSections, p1, p2, [255, 255, 255, 255], parseInt(LineHeight));
             }
 
-            let dst2 = cv.Mat.zeros(mask.rows, mask.cols, mask.type());
-            let resultz = cv.Mat.ones(mask.rows, mask.cols, mask.type());
-            const lineheight = previousRow - ContactContentYLocs.at(-1);
+            // Apply bitwise AND to combine content sections with the cropped image
+            cv.bitwise_and(ContentSections, cropped_bgr, cropped_bgr);
 
-            for (let i = 0; i < ContactContentYLocs.length; i++) {
-                let Ymin = ContactContentYLocs[i];
-                cv.rectangle(dst2, new cv.Point(Math.min(...ContactContentXLocs), Ymin), new cv.Point(Math.floor(dst2.size().width / 1.2), Ymin + Math.floor(lineheight * 1.5)), new cv.Scalar(255), -1);
-            }
+            // Display the result
+            cv.imshow(`ScrnShotMask${ID}`, cropped_bgr);
 
-            bgr_img.copyTo(resultz, dst2);
-            cv.cvtColor(resultz, resultz, cv.COLOR_RGBA2GRAY, 0);
-
-            let Showcanvas = document.getElementById(`ScrnShotMask${ID}`);
-            cv.imshow(Showcanvas, resultz);
-
-            // Clean up memory
+            // Clean up
             gray_img.delete();
+            blurred_img.delete();
+            circles.delete();
+            edges1.delete();
+            edges2.delete();
+            result.delete();
+            verticalLines.delete();
             contours.delete();
             hierarchy.delete();
-            contours2.delete();
-            hierarchy2.delete();
-            lowlow.delete();
-            highhigh.delete();
-            mask.delete();
-            dst.delete();
-            dst2.delete();
-            resultz.delete();
+            ContentSections.delete();
 
-            //cv.imshow(canvas, MatImage);
         }).catch(err => {
             console.error('Error:', err);
         });
