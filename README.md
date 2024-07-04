@@ -1,2 +1,2 @@
 # SalesNavigation
-An simple website to convert your screenshots
+An simple website to convert your screenshots using OpenCV and Tesseract
