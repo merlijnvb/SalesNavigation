@@ -12,30 +12,32 @@
     <span id="offWindowBtn" style="display: none;" onclick="DisplayInfo()"></span>
     <section id="InfoDisplay" style="display: none;">
         <div id="InfoDisText">
-            <div class="InfoContent" id="info_content_first">
+            <div class="InfoContent" id="info_content_first" onmouseover="DisplayVisual(1)">
                 <h2>Sales Navigation Manual</h2>
                 <h3>Basics:</h3>
                 <p>Screenshot your Sales Navigator & paste it inside this webpage. Click the convert button to convert your screenshots into raw contact data. The resulting text will be automatically copied to your clipboard.</p>
             </div>
-            <div class="InfoContent" id="info_content_third">
+            <div class="InfoContent" id="info_content_third" onmouseover="DisplayVisual(2)">
                 <h3>Single & double click the image:</h3>
                 <p><b>When single clicking</b> the image you pasted you will see the masked image containing the information you will get in string format when clicking the convert button.</p>
                 <p><b>When double clicking</b> the image you pasted you will remove that image from your collection.</p>
             </div>
-            <div class="InfoContent" id="info_content_second">
+            <div class="InfoContent" id="info_content_second" onmouseover="DisplayVisual(3)">
                 <h3>Set page theme:</h3>
                 <p>You can change your color mode by clicking on the title of the page</p>
             </div>
         </div>
         <div id="InfoDisVis">
-
+            <div id="VisualConvertBtn" style="display: none">
+            </div>
         </div>
     </section>
 
-    <h1 id="LightModus" onclick="changeLightModus('dark')" ondblclick="changeWorkModus('ScrnTxt')">Sales Navigation</h1> <!-- ScrnSafe -->
+    <h1 id="LightModus" onclick="changeLightModus('dark')" ondblclick="changeWorkModus(2)">Sales Navigation</h1> <!-- ScrnSafe -->
     <section id="Images"><h2 id="CrtlPlaceholder">Crtl + V / Cmnd + V</h2></section>
+    <section id="TextModus" style="display: none;"><textarea id="TextInputArea"></textarea></section>
     <section id="Controls">
-        <button onclick="conversion()">Convert</button>
+        <button id="CnvrtBtn" onclick="conversionImage()">Convert</button>
     </section>
 </body>
 </html>
@@ -43,6 +45,7 @@
 <script>
     let ScrnShotCounter = 0;
     let counter = false;
+    let CnvrtModus = 1;
     //CHECK IF BROWSER COLOR SCHEME IS SET TO DARK: IF SO SET WEBPAGE COLOR SCHEME ALSO TO BLACK
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
         changeLightModus('dark');
@@ -63,6 +66,7 @@
                 document.documentElement.style.setProperty("--col-border", '#FFFFFF');
                 document.documentElement.style.setProperty("--col-InfoDisplay", 'rgba(255,255,255,0.98)');
                 document.documentElement.style.setProperty("--col-InfoDisplay-sub", 'rgba(0,0,0,0.03)');
+                document.getElementById('VisualConvertBtn').style.backgroundImage = 'url(SalesNavBlack.gif)';
 
 
                 break;
@@ -78,6 +82,7 @@
                 document.documentElement.style.setProperty("--col-border", 'black');
                 document.documentElement.style.setProperty("--col-InfoDisplay", 'rgba(0,0,0,0.98)');
                 document.documentElement.style.setProperty("--col-InfoDisplay-sub", 'rgba(255,255,255,0.03)');
+                document.getElementById('VisualConvertBtn').style.backgroundImage = 'url(SalesNavWhite.gif)';
 
                 break;
             default:
@@ -137,7 +142,12 @@
     }
 
     window.addEventListener("paste", function (e) {
-        let item = Array.from(e.clipboardData.items).find(x => /^image\//.test(x.type));
+        if (CnvrtModus == 1) {
+            CreateImageConversion(Array.from(e.clipboardData.items).find(x => /^image\//.test(x.type)));
+        }        
+    });
+
+    function CreateImageConversion(PasteItem) {
         const Placeholder = document.getElementById('CrtlPlaceholder');
 
 
@@ -149,11 +159,11 @@
             ID = ScrnShotCounter;
         }
 
-        if (Placeholder && item) {
+        if (Placeholder && PasteItem) {
             Placeholder.remove();
         }
 
-        let blob = item.getAsFile();
+        let blob = PasteItem.getAsFile();
         let img = new Image();
 
         img.onload = function () {
@@ -211,26 +221,27 @@
             cv.HoughCircles(blurred_img, circles, cv.HOUGH_GRADIENT, 1, blurred_img.rows / 16, 100, 30, 10, 100);
 
             // Extract circle centroids
-            let Xs = [], Ys = [];
+            let Xs = [], Ys = [], Radius = [];
             for (let i = 0; i < circles.cols; ++i) {
                 Xs.push(circles.data32F[i * 3]);
                 Ys.push(circles.data32F[i * 3 + 1]);
+                Radius.push(circles.data32F[i * 3 + 2]);
             }
+
 
             // Find repeated x and y coordinates
             let Xrepeated = findCloseValues(Xs, 2, true);
             let Yrepeated = findCloseValues(Ys, 25);
             const WidthFactor = 3 / 4;
-            const HeightFactor = 2.5;
 
             // Calculate line height and create content sections
-            let LineHeight = (parseInt(Yrepeated[1]) - parseInt(Yrepeated[0])) / HeightFactor;
+            const LineHeight = Radius.at(Xs.indexOf(Xrepeated[0][0])) * 2;
             let ContentSections = new cv.Mat.zeros(cropped_bgr.rows, cropped_bgr.cols, cropped_bgr.type());
 
             for (let j = 0; j < Yrepeated.length; j++) {
                 let p1 = new cv.Point(parseInt(Xrepeated[0][0]), parseInt(Yrepeated[j][0]));
                 let p2 = new cv.Point(parseInt(Xrepeated.at(-1)[1]) * WidthFactor, parseInt(Yrepeated[j][0]));
-                cv.line(ContentSections, p1, p2, [255, 255, 255, 255], parseInt(LineHeight));
+                cv.line(ContentSections, p1, p2, [255, 255, 255, 255], LineHeight);
             }
 
             // Apply bitwise AND to combine content sections with the cropped image
@@ -256,7 +267,10 @@
         });
 
         ScrnShotCounter++;
-    });
+    }
+
+
+
 
     let OlderImageBool = false;
     let OlderImageDist = 0;
@@ -381,7 +395,7 @@
         });
     }
 
-    function conversion() {
+    function conversionImage() {
         const Canvases = document.getElementsByClassName('ScreenShotMask');
 
         if (Canvases.length === 0) {
@@ -406,5 +420,75 @@
             PopUpWindow('All contact info from the screenshots are copied to your clipboard');
         });
     }
+
+    function conversionText() {
+        const inputText = document.getElementById('TextInputArea').value;
+        const lines = inputText.split('\n');
+        const intermediateText = [];
+
+        for (let i = 0; i < lines.length; i++) {
+            if (/\d/.test(lines[i]) && !/LinkedIn/i.test(lines[i]) && !/connectie/i.test(lines[i]) && !/connection/i.test(lines[i])) {
+                if (i > 1) {
+                    intermediateText.push(lines[i - 2]);
+                }
+            }
+        }
+
+        let cookedText = [];
+        intermediateText.forEach((element, index) => {
+            const splitElements = element.split(' ').filter(str => str !== '');
+            if (index % 2 === 1) {
+                cookedText.push(splitElements.slice(0, -1).join(' '));
+                cookedText.push(splitElements.at(-1));
+            } else if (index % 2 === 0) {
+                console.log();
+                cookedText.push([splitElements.at(0), splitElements.slice(1, splitElements.length).join(' ')].join('\t'));
+            } else {
+                cookedText.push(element);
+            }
+        });
+        const outputText = [];
+        for (let i = 0; i < cookedText.length; i += 3) {
+            outputText.push(cookedText.slice(i, i + 3).join('\t'));
+        }
+        console.log(outputText.join('\n'));
+        navigator.clipboard.writeText(outputText.join('\n'));
+    }
+
+
+    function DisplayVisual(Visual) {
+        switch (Visual) {
+            case 1:
+                document.getElementById('VisualConvertBtn').style.display = 'unset';
+                break
+            case 2:
+                document.getElementById('VisualConvertBtn').style.display = 'none';
+                break
+            default:
+                break
+        }
+    }
+
+    function changeWorkModus(Modus) {
+        switch (Modus) {
+            case 1:
+                document.getElementById('Images').style.display = 'flex';
+                document.getElementById('TextModus').style.display = 'none';
+                document.getElementById('LightModus').setAttribute('ondblclick', 'changeWorkModus(2)');
+                document.getElementById('CnvrtBtn').setAttribute('onclick', 'conversionImage()');
+                CnvrtModus = 1;
+                break
+            case 2:
+                document.getElementById('Images').style.display = 'none';
+                document.getElementById('TextModus').style.display = 'flex';
+                document.getElementById('LightModus').setAttribute('ondblclick', 'changeWorkModus(1)');
+                document.getElementById('CnvrtBtn').setAttribute('onclick', 'conversionText()');
+                CnvrtModus = 2;
+                break
+            default:
+                break
+        }
+    }
+
 
 </script>
