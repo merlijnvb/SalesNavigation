@@ -14,15 +14,23 @@
         <div id="InfoDisText">
             <div class="InfoContent" id="info_content_first" onmouseover="DisplayVisual(1)">
                 <h2>Sales Navigation Manual</h2>
-                <h3>Basics:</h3>
+                <h3>Basics screenshot:</h3>
                 <p>Screenshot your Sales Navigator & paste it inside this webpage. Click the convert button to convert your screenshots into raw contact data. The resulting text will be automatically copied to your clipboard.</p>
             </div>
-            <div class="InfoContent" id="info_content_third" onmouseover="DisplayVisual(2)">
+            <div class="InfoContent" id="info_content_second" onmouseover="DisplayVisual(2)">
+                <h3>Basics text copy paste:</h3>
+                <p>Copy the text containing your wanted contact data. This data has to contain numbers! Numbers like: 3e, 2022, 3rd, 1st. Paste this data into this site. Click the convert button to convert your raw contact data. The resulting text will be automatically copied to your clipboard.</p>
+            </div>
+            <div class="InfoContent" id="info_content_second" onmouseover="DisplayVisual(2)">
+                <h3>Switch conversion mode:</h3>
+                <p>Switch from Image-Text to Text-Text conversion, and vice-versa, by double clicking the 'Sales Navigation Manual' title.</p>
+            </div>
+            <div class="InfoContent" id="info_content_third" onmouseover="DisplayVisual(3)">
                 <h3>Single & double click the image:</h3>
                 <p><b>When single clicking</b> the image you pasted you will see the masked image containing the information you will get in string format when clicking the convert button.</p>
                 <p><b>When double clicking</b> the image you pasted you will remove that image from your collection.</p>
             </div>
-            <div class="InfoContent" id="info_content_second" onmouseover="DisplayVisual(3)">
+            <div class="InfoContent" id="info_content_fourth" onmouseover="DisplayVisual(4)">
                 <h3>Set page theme:</h3>
                 <p>You can change your color mode by clicking on the title of the page</p>
             </div>
@@ -58,14 +66,14 @@
                 //CHANGE INPUT STATUS TO LIGHT MODUS ON BUTTON
                 document.getElementById('LightModus').setAttribute("onclick", "changeLightModus('light')");
                 //CHANGE CSS GLOBAL VARIABLES TO DARK THEME
-                document.documentElement.style.setProperty("--col-background", 'black');
-                document.documentElement.style.setProperty("--col-background-sub", '#141414');
-                document.documentElement.style.setProperty("--col-popup", '#FFFFFF');
-                document.documentElement.style.setProperty("--col-popup-txt", 'black');
-                document.documentElement.style.setProperty("--col-txt", '#FFFFFF');
-                document.documentElement.style.setProperty("--col-border", '#FFFFFF');
-                document.documentElement.style.setProperty("--col-InfoDisplay", 'rgba(255,255,255,0.98)');
-                document.documentElement.style.setProperty("--col-InfoDisplay-sub", 'rgba(0,0,0,0.03)');
+                document.documentElement.style.setProperty("--col-background", '#262626');
+                document.documentElement.style.setProperty("--col-background-sub", '#000000');
+                document.documentElement.style.setProperty("--col-popup", '#F0F0F0');
+                document.documentElement.style.setProperty("--col-popup-txt", '#262626');
+                document.documentElement.style.setProperty("--col-txt", '#F0F0F0');
+                document.documentElement.style.setProperty("--col-border", '#F0F0F0');
+                document.documentElement.style.setProperty("--col-InfoDisplay", 'rgba(255,255,255,0.95)');
+                document.documentElement.style.setProperty("--col-InfoDisplay-sub", 'rgba(0,0,0,0.05)');
                 document.getElementById('VisualConvertBtn').style.backgroundImage = 'url(SalesNavBlack.gif)';
 
 
@@ -74,14 +82,14 @@
                 //CHANGE INPUT STATUS TO LIGHT MODUS ON BUTTON
                 document.getElementById('LightModus').setAttribute("onclick", "changeLightModus('dark')");
                 //CHANGE CSS GLOBAL VARIABLES TO DARK THEME
-                document.documentElement.style.setProperty("--col-background", '#FFFFFF');
-                document.documentElement.style.setProperty("--col-background-sub", '#F5F5F5');
-                document.documentElement.style.setProperty("--col-popup", 'black');
-                document.documentElement.style.setProperty("--col-popup-txt", '#FFFFFF');
-                document.documentElement.style.setProperty("--col-txt", 'black');
-                document.documentElement.style.setProperty("--col-border", 'black');
-                document.documentElement.style.setProperty("--col-InfoDisplay", 'rgba(0,0,0,0.98)');
-                document.documentElement.style.setProperty("--col-InfoDisplay-sub", 'rgba(255,255,255,0.03)');
+                document.documentElement.style.setProperty("--col-background", '#F0F0F0');
+                document.documentElement.style.setProperty("--col-background-sub", '#FFFFFF');
+                document.documentElement.style.setProperty("--col-popup", '#262626');
+                document.documentElement.style.setProperty("--col-popup-txt", '#F0F0F0');
+                document.documentElement.style.setProperty("--col-txt", '#262626');
+                document.documentElement.style.setProperty("--col-border", '#262626');
+                document.documentElement.style.setProperty("--col-InfoDisplay", 'rgba(0,0,0,0.95)');
+                document.documentElement.style.setProperty("--col-InfoDisplay-sub", 'rgba(255,255,255,0.05)');
                 document.getElementById('VisualConvertBtn').style.backgroundImage = 'url(SalesNavWhite.gif)';
 
                 break;
@@ -142,9 +150,17 @@
     }
 
     window.addEventListener("paste", function (e) {
-        if (CnvrtModus == 1) {
-            CreateImageConversion(Array.from(e.clipboardData.items).find(x => /^image\//.test(x.type)));
-        }        
+        const items = e.clipboardData.items;
+
+        if (items[0].type.indexOf('image') !== -1) {
+            changeWorkModus(1);
+            CreateImageConversion(Array.from(items).find(x => /^image\//.test(x.type)));
+        } else if (items[0].type === 'text/plain') {
+            changeWorkModus(2);
+            items[0].getAsString(function (str) {
+                document.getElementById('TextInputArea').innerHTML = str;
+            });
+        }
     });
 
     function CreateImageConversion(PasteItem) {

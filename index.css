@@ -15,6 +15,7 @@
     --size-p-info: calc(5px + 12 * ((53vw + 53vh) - 600px) / 820);
     --size-p-landing: calc(7px + 10 * ((53vw + 53vh) - 600px) / 820);
     --size-p-popup: calc(7px + 10 * ((53vw + 53vh) - 600px) / 820);
+    --size-border-info: calc(2px + 3 * ((45vw + 45vh) - 600px) / 820);
 }
 
 
@@ -123,19 +124,19 @@ h2 {
 
 .InfoBtn {
     position: absolute;
-    font-size: 30px;
-    font-weight: 900;
+    font-size: var(--size-h1);
+    font-weight: 500;
     margin-top: 25px;
     margin-left: calc(100% - 75px);
-    background-color: var(--col-txt);
-    opacity: 0.75;
     width: 50px;
     height: 50px;
+    border: var(--size-border-info) solid;
+    border-color: var(--col-popup);
     border-radius: 100%;
     text-align: center;
     align-content: center;
     cursor: pointer;
-    color: var(--col-background);
+    color: var(--col-popup);
     z-index: 2;
 }
 
@@ -164,6 +165,8 @@ h2 {
     width: 50%;
     height: 100%;
     position: absolute;
+    overflow: hidden;
+    overflow-y: auto;
 }
 
 #InfoDisVis {
@@ -178,7 +181,7 @@ h2 {
 .InfoContent {
     margin-left: 5%;
     margin-top: 1%;
-    height: 33%;
+    margin-bottom: 10%;
     width: 100%;
 }
 
