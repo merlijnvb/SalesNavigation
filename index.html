@@ -450,7 +450,7 @@
             let infoline = ''; 
     
             if ((/\d/.test(lines[i]) && /[·]/.test(lines[i]))) {
-                names.push(lines[i - 2].split(' ')[0] + '\t' + lines[i - 2].split(' ').slice(1, lines[i - 2].split(' ').length));
+                names.push(lines[i - 2].split(' ')[0] + '\t' + lines[i - 2].split(' ').slice(1, lines[i - 2].split(' ').length).join(' '));
                 x1 = i;
             } else if (/\d/.test(lines[i]) && /  /.test(lines[i]) && i - x1 > 2) {
                 infoline += '\t' + lines[i - 2].split('  ')[0] + '\t';
