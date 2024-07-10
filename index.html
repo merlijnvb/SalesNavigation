@@ -43,20 +43,28 @@
 
     <h1 id="LightModus" onclick="changeLightModus('dark')" ondblclick="changeWorkModus(2)">Sales Navigation</h1> <!-- ScrnSafe -->
     <section id="Images"><h2 id="CrtlPlaceholder">Crtl + V / Cmnd + V</h2></section>
-    <section id="TextModus" style="display: none;"><textarea id="TextInputArea"></textarea></section>
+    <section id="TextModus" style="display: none;"><textarea id="TextInputArea" onclick="eraseText()" ondblclick="eraseText(true)">Cntrl + v...</textarea></section>
     <section id="Controls">
-        <button id="CnvrtBtn" onclick="conversionImage()">Convert</button>
+        <button id="CnvrtBtn" onclick="conversionImage(true)">Convert</button>
     </section>
+    <span id="ImageContentText" style="display: none;"></span>
 </body>
 </html>
 
 <script>
     let ScrnShotCounter = 0;
     let counter = false;
-    let CnvrtModus = 1;
+    let TextAreaClickCount = 0;
     //CHECK IF BROWSER COLOR SCHEME IS SET TO DARK: IF SO SET WEBPAGE COLOR SCHEME ALSO TO BLACK
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
         changeLightModus('dark');
+    }
+
+    function eraseText(OverRide = false) {
+        if (TextAreaClickCount == 0 || OverRide) {
+            document.getElementById("TextInputArea").value = "";
+        }
+        TextAreaClickCount++;
     }
 
     //LIGHT MODUS CHANGE FUNCTION: WITH 'MODUS' = 'dark' OR 'light' AS INPUT;
@@ -265,7 +273,7 @@
 
             // Display the result
             cv.imshow(`ScrnShotMask${ID}`, cropped_bgr);
-
+            conversionImage(false, ID);
             // Clean up
             gray_img.delete();
             blurred_img.delete();
@@ -411,7 +419,7 @@
         });
     }
 
-    function conversionImage() {
+    function conversionImage(BtnClick = flase, ID = 0) {
         const Canvases = document.getElementsByClassName('ScreenShotMask');
 
         if (Canvases.length === 0) {
@@ -422,33 +430,52 @@
         let txt = [];
         let promises = [];
 
-        for (let i = 0; i < Canvases.length; i++) {
+        
+
+        const ImageTextContainer = document.getElementById('ImageContentText');
+        if (BtnClick) {
+            for (let i = 0; i < Canvases.length; i++) {
+                promises.push(
+                    extractTextFromCanvas(Canvases[i]).then(text => {
+                        const outputString = ImageStringtoArray(text);
+                        txt.push(outputString);
+                    })
+                );
+            }
+
+
+            Promise.all(promises).then(() => {
+                navigator.clipboard.writeText(txt.join('\n'));
+                PopUpWindow('All contact info from the screenshots are copied to your clipboard');
+            });
+        } else {
             promises.push(
-                extractTextFromCanvas(Canvases[i]).then(text => {
+                extractTextFromCanvas(Canvases[ID]).then(text => {
                     const outputString = ImageStringtoArray(text);
                     txt.push(outputString);
                 })
             );
+            Promise.all(promises).then(() => {
+                let outputLine = ImageTextContainer.innerHTML; 
+                outputLine += "\n" + ID + "\n" + txt.join('\n');
+                ImageTextContainer.innerText = outputLine;
+            });
         }
-
-        Promise.all(promises).then(() => {
-            navigator.clipboard.writeText(txt.join('\n'));
-            PopUpWindow('All contact info from the screenshots are copied to your clipboard');
-        });
+        
     }
 
     function conversionText() {
         const inputText = document.getElementById('TextInputArea').value;
         const lines = inputText.split('\n');
         let outputText = '';
-    
+
         let names = [];
         let info = [];
         let x1 = 0;
-    
+
         for (let i = 0; i < lines.length; i++) {
             let infoline = ''; 
-    
+
             if ((/\d/.test(lines[i]) && /[·]/.test(lines[i]))) {
                 names.push(lines[i - 2].split(' ')[0] + '\t' + lines[i - 2].split(' ').slice(1, lines[i - 2].split(' ').length).join(' '));
                 x1 = i;
@@ -460,7 +487,7 @@
                 info.push(infoline)
             }    
         }
-    
+
         for (let k = 0; k < names.length; k++) {
             outputText += names[k] + info[k] + '\n';
         }
@@ -489,15 +516,13 @@
                 document.getElementById('Images').style.display = 'flex';
                 document.getElementById('TextModus').style.display = 'none';
                 document.getElementById('LightModus').setAttribute('ondblclick', 'changeWorkModus(2)');
-                document.getElementById('CnvrtBtn').setAttribute('onclick', 'conversionImage()');
-                CnvrtModus = 1;
+                document.getElementById('CnvrtBtn').setAttribute('onclick', 'conversionImage(true)');
                 break
             case 2:
                 document.getElementById('Images').style.display = 'none';
                 document.getElementById('TextModus').style.display = 'flex';
                 document.getElementById('LightModus').setAttribute('ondblclick', 'changeWorkModus(1)');
                 document.getElementById('CnvrtBtn').setAttribute('onclick', 'conversionText()');
-                CnvrtModus = 2;
                 break
             default:
                 break
