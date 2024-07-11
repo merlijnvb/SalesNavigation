@@ -469,34 +469,27 @@
         const lines = inputText.split('\n');
         let outputText = '';
 
-        let names = [];
-        let info = [];
-        let x1 = 0;
-
         for (let i = 0; i < lines.length; i++) {
             let infoline = ''; 
 
-            if ((/\d/.test(lines[i]) && /[·]/.test(lines[i]))) {
-                names.push(lines[i - 2].split(' ')[0] + '\t' + lines[i - 2].split(' ').slice(1, lines[i - 2].split(' ').length).join(' '));
-                x1 = i;
-                nearConnection = true;
-            } else if (((/\d/.test(lines[i]) && /  /.test(lines[i])) || (/in rol/.test(lines[i]) && /bedrijf/.test(lines[i])))        && i - x1 > 2 && !/connectie/.test(lines[i]) && !/connection/.test(lines[i])) {
+            if ((/in rol/.test(lines[i]) && /bedrijf/.test(lines[i])) || (/in role/.test(lines[i]) && /company/.test(lines[i]))) {
+                if (/\d/.test(lines[i - 4]) && /[·]/.test(lines[i - 4])) {
+                    infoline += lines[i - 6].split(' ')[0] + '\t' + lines[i - 6].split(' ').slice(1, lines[i - 6].split(' ').length).join(' ');
+                } else if (/\d/.test(lines[i - 3]) && /[·]/.test(lines[i - 3])) {
+                    infoline += lines[i - 5].split(' ')[0] + '\t' + lines[i - 5].split(' ').slice(1, lines[i - 5].split(' ').length).join(' ');
+                } else {
+                    infoline += lines[i - 3].split(' ')[0] + '\t' + lines[i - 3].split(' ').slice(1, lines[i - 3].split(' ').length).join(' ');
+                }
+
+
                 infoline += '\t' + lines[i - 2].split('  ')[0] + '\t';
                 infoline += '\t' + lines[i - 2].split('  ')[1];
                 infoline += '\t' + lines[i - 2].split('  ')[1] + '\t\t';
                 infoline += '\t' + lines[i - 1].split(',')[0];
-                info.push(infoline)
-
-                if (!/[·]/.test(lines[i-3])) {
-                    names.push(lines[i - 3].split(' ')[0] + '\t' + lines[i - 3].split(' ').slice(1, lines[i - 3].split(' ').length).join(' '));
-                }
+                outputText += infoline + '\n';
             }    
         }
 
-        for (let k = 0; k < names.length; k++) {
-            outputText += names[k] + info[k] + '\n';
-        }
-        
         navigator.clipboard.writeText(outputText);
         PopUpWindow('All contact info from the text are copied to your clipboard');
     }
