@@ -472,7 +472,6 @@
         let names = [];
         let info = [];
         let x1 = 0;
-        let nearConnection = false;
 
         for (let i = 0; i < lines.length; i++) {
             let infoline = ''; 
@@ -481,7 +480,7 @@
                 names.push(lines[i - 2].split(' ')[0] + '\t' + lines[i - 2].split(' ').slice(1, lines[i - 2].split(' ').length).join(' '));
                 x1 = i;
                 nearConnection = true;
-            } else if (/\d/.test(lines[i]) && /  /.test(lines[i]) && i - x1 > 2 && !/connectie/.test(lines[i]) && !/connection/.test(lines[i])) {
+            } else if (((/\d/.test(lines[i]) && /  /.test(lines[i])) || (/in rol/.test(lines[i]) && /bedrijf/.test(lines[i])))        && i - x1 > 2 && !/connectie/.test(lines[i]) && !/connection/.test(lines[i])) {
                 infoline += '\t' + lines[i - 2].split('  ')[0] + '\t';
                 infoline += '\t' + lines[i - 2].split('  ')[1];
                 infoline += '\t' + lines[i - 2].split('  ')[1] + '\t\t';
