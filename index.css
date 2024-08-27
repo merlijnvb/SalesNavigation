@@ -1,12 +1,12 @@
 ﻿:root {
-    --col-background: #FFFFFF;
-    --col-popup: black;
-    --col-popup-txt: #FFFFFF;
-    --col-txt: black;
-    --col-border: black;
-    --col-background-sub: #141414;
-    --col-InfoDisplay: rgba(255,255,255,0.98);
-    --col-InfoDisplay-sub: rgba(0,0,0,0.03);
+    --col-background = #F0F0F0;
+    --col-background-sub = #FFFFFF;
+    --col-popup = #262626;
+    --col-popup-txt = #F0F0F0;
+    --col-txt = #262626;
+    --col-border = #262626;
+    --col-InfoDisplay = rgba(0,0,0,0.95);
+    --col-InfoDisplay-sub = rgba(255,255,255,0.05);
     --size-h1: calc(15px + 20 * ((53vw + 53vh) - 600px) / 820);
     --size-h1-manual: calc(7px + 11 * ((53vw + 53vh) - 600px) / 820);
     --size-h2: calc(15px + 20 * ((53vw + 53vh) - 600px) / 820);
