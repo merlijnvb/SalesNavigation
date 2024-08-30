@@ -1,12 +1,12 @@
 ﻿:root {
-    --col-background = #F0F0F0;
-    --col-background-sub = #FFFFFF;
-    --col-popup = #262626;
-    --col-popup-txt = #F0F0F0;
-    --col-txt = #262626;
-    --col-border = #262626;
-    --col-InfoDisplay = rgba(0,0,0,0.95);
-    --col-InfoDisplay-sub = rgba(255,255,255,0.05);
+    --col-background: #F0F0F0;
+    --col-background-sub: #FFFFFF;
+    --col-popup: #262626;
+    --col-popup-txt: #F0F0F0;
+    --col-txt: #262626;
+    --col-border: #262626;
+    --col-InfoDisplay: rgba(0,0,0,0.95);
+    --col-InfoDisplay-sub: rgba(255,255,255,0.05);
     --size-h1: calc(15px + 20 * ((53vw + 53vh) - 600px) / 820);
     --size-h1-manual: calc(7px + 11 * ((53vw + 53vh) - 600px) / 820);
     --size-h2: calc(15px + 20 * ((53vw + 53vh) - 600px) / 820);
@@ -47,13 +47,6 @@ section {
     overflow: hidden;
 }
 
-#Images {
-    height: 70%;
-    box-shadow: inset 0 0 2px var(--col-border);
-    display: flex;
-    overflow-x: auto;
-}
-
 #TextModus {
     height: 70%;
     box-shadow: inset 0 0 2px var(--col-border);
@@ -64,31 +57,6 @@ section {
     aspect-ratio: 16/10;
     background-color: var(--col-background-sub);
     padding: var(--size-p-landing);
-}
-
-.ScreenShotFolder {
-    height: 60%;
-    aspect-ratio: 16/10;
-    margin: 0 2%;
-    opacity: 0.8;
-    transition: ease all 0.5s;
-}
-
-.ScreenShotFolder:hover {
-    opacity: 1;
-    cursor: pointer;
-    height: 61%;
-}
-.ScreenShotFolder:last-child {
-    opacity: 1;
-}
-
-.ScreenShotFolder > * {
-    width: 100%;
-    height: 100%;
-    background-repeat: no-repeat;
-    background-size: contain;
-    background-position: center;
 }
 
 
@@ -114,12 +82,6 @@ h1{
     margin-top: 1%;
     margin-left: 50%;
     transform: translateX(-50%);
-}
-
-h2 {
-    font-size: var(--size-h2);
-    font-weight: 900;
-    opacity: 0.5;
 }
 
 .InfoBtn {
@@ -187,19 +149,6 @@ h2 {
 
 .InfoContent > * {
     color: var(--col-popup-txt);
-}
-
-.InfoContent > h2 {
-    font-size: var(--size-h2);
-    opacity: 1;
-    font-weight: 1000;
-    margin-bottom: 1%;
-}
-
-.InfoContent > h3 {
-    font-size: var(--size-h3);
-    font-weight: 800;
-    margin-bottom: 1%;
 }
 
 .InfoContent > p {

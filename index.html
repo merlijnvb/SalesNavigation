@@ -11,24 +11,11 @@
     <div class="InfoBtn" id="inactiveBtn" onclick="DisplayInfo()">i</div>
     <span id="offWindowBtn" style="display: none;" onclick="DisplayInfo()"></span>
     <section id="InfoDisplay" style="display: none;">
+        <!--INFO DISPLAY-->
         <div id="InfoDisText">
-            <div class="InfoContent" id="info_content_first" onmouseover="DisplayVisual(1)">
-                <h2>Sales Navigation Manual</h2>
-                <h3>Basics screenshot:</h3>
-                <p>Screenshot your Sales Navigator & paste it inside this webpage. Click the convert button to convert your screenshots into raw contact data. The resulting text will be automatically copied to your clipboard.</p>
-            </div>
             <div class="InfoContent" id="info_content_second" onmouseover="DisplayVisual(2)">
                 <h3>Basics text copy paste:</h3>
                 <p>Copy the text containing your wanted contact data. This data has to contain numbers! Numbers like: 3e, 2022, 3rd, 1st. Paste this data into this site. Click the convert button to convert your raw contact data. The resulting text will be automatically copied to your clipboard.</p>
-            </div>
-            <div class="InfoContent" id="info_content_second" onmouseover="DisplayVisual(2)">
-                <h3>Switch conversion mode:</h3>
-                <p>Switch from Image-Text to Text-Text conversion, and vice-versa, by double clicking the 'Sales Navigation Manual' title.</p>
-            </div>
-            <div class="InfoContent" id="info_content_third" onmouseover="DisplayVisual(3)">
-                <h3>Single & double click the image:</h3>
-                <p><b>When single clicking</b> the image you pasted you will see the masked image containing the information you will get in string format when clicking the convert button.</p>
-                <p><b>When double clicking</b> the image you pasted you will remove that image from your collection.</p>
             </div>
             <div class="InfoContent" id="info_content_fourth" onmouseover="DisplayVisual(4)">
                 <h3>Set page theme:</h3>
@@ -41,13 +28,14 @@
         </div>
     </section>
 
-    <h1 id="LightModus" onclick="changeLightModus('dark')" ondblclick="changeWorkModus(2)">Sales Navigation</h1> <!-- ScrnSafe -->
-    <section id="Images"><h2 id="CrtlPlaceholder">Crtl + V / Cmnd + V</h2></section>
-    <section id="TextModus" style="display: none;"><textarea id="TextInputArea" onclick="eraseText()" ondblclick="eraseText(true)">Cntrl + v...</textarea></section>
-    <section id="Controls">
-        <button id="CnvrtBtn" onclick="conversionImage(true)">Convert</button>
+    <!--INFO DISPLAY-->
+    <h1 id="LightModus" onclick="changeLightModus('dark')">Sales Navigation</h1> <!-- ScrnSafe -->
+    <section id="TextModus">
+        <textarea id="TextInputArea" onclick="eraseText()" ondblclick="eraseText(true)">    Ctrl + v</textarea>
     </section>
-    <span id="ImageContentText" style="display: none;"></span>
+    <section id="Controls">
+        <button id="CnvrtBtn" onclick="conversionText()" ondblclick="conversionAutomate('automate')">Convert</button>
+    </section>
 </body>
 </html>
 
@@ -55,10 +43,33 @@
     let ScrnShotCounter = 0;
     let counter = false;
     let TextAreaClickCount = 0;
+    let AutomateStatus = false;
     //CHECK IF BROWSER COLOR SCHEME IS SET TO DARK: IF SO SET WEBPAGE COLOR SCHEME ALSO TO BLACK
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
         changeLightModus('dark');
     }
+
+    window.addEventListener("paste", function (e) {
+        const items = e.clipboardData.items;
+        if (items.length > 0) {
+            if (items[0].type === 'text/plain'){
+                items[0].getAsString(function (str) {
+                    document.getElementById('TextInputArea').innerHTML = str;
+                    if (AutomateStatus){
+                        conversionText();
+                    }
+                });
+            }else{
+                PopUpWindow('Copy element is not text.');
+                if (AutomateStatus){
+                    PopUpWindow('Copy element contains formatted text. Copy your SalesNav again.');
+                }
+            }
+        }else{
+            PopUpWindow('Copy element is empty.');
+            //eraseText(OverRide = true);
+        }
+    });
 
     function eraseText(OverRide = false) {
         if (TextAreaClickCount == 0 || OverRide) {
@@ -66,6 +77,27 @@
         }
         TextAreaClickCount++;
     }
+
+    function conversionAutomate(modus){
+        const CnvrtBtn = document.getElementById('CnvrtBtn');
+        switch(modus){
+            case 'manual':
+                CnvrtBtn.setAttribute("ondblclick", "conversionAutomate('automate')");
+                CnvrtBtn.setAttribute("onclick", "conversionText()");
+                document.getElementById('CnvrtBtn').innerText = 'Convert';
+                AutomateStatus = false;
+                break;
+            case 'automate':
+                CnvrtBtn.setAttribute("ondblclick", "conversionAutomate('manual')");
+                CnvrtBtn.setAttribute("onclick", "");
+                document.getElementById('CnvrtBtn').innerText = 'Auto-Convert';
+                AutomateStatus = true;
+                break;
+            default:
+                //placeholder
+        }
+    }
+
 
     //LIGHT MODUS CHANGE FUNCTION: WITH 'MODUS' = 'dark' OR 'light' AS INPUT;
     function changeLightModus(modus) {
@@ -89,7 +121,7 @@
             case 'light':
                 //CHANGE INPUT STATUS TO LIGHT MODUS ON BUTTON
                 document.getElementById('LightModus').setAttribute("onclick", "changeLightModus('dark')");
-                //CHANGE CSS GLOBAL VARIABLES TO DARK THEME
+                //CHANGE CSS GLOBAL VARIABLES TO LIGHT THEME
                 document.documentElement.style.setProperty("--col-background", '#F0F0F0');
                 document.documentElement.style.setProperty("--col-background-sub", '#FFFFFF');
                 document.documentElement.style.setProperty("--col-popup", '#262626');
@@ -157,242 +189,7 @@
         return indexes;
     }
 
-    window.addEventListener("paste", function (e) {
-        const items = e.clipboardData.items;
-
-        if (items[0].type.indexOf('image') !== -1) {
-            changeWorkModus(1);
-            CreateImageConversion(Array.from(items).find(x => /^image\//.test(x.type)));
-        } else if (items[0].type === 'text/plain') {
-            changeWorkModus(2);
-            items[0].getAsString(function (str) {
-                document.getElementById('TextInputArea').innerHTML = str;
-            });
-        }
-    });
-
-    function CreateImageConversion(PasteItem) {
-        const Placeholder = document.getElementById('CrtlPlaceholder');
-
-
-        let ID;
-        if (OlderImageBool) {
-            OlderImageBool = false;
-            ID = ScrnShotCounter - OlderImageDist;
-        } else {
-            ID = ScrnShotCounter;
-        }
-
-        if (Placeholder && PasteItem) {
-            Placeholder.remove();
-        }
-
-        let blob = PasteItem.getAsFile();
-        let img = new Image();
-
-        img.onload = function () {
-            CreateImageFolderElements(this, ID);
-        };
-
-        img.src = URL.createObjectURL(blob);
-        CreateMaskedImageFromBlob(blob).then(MatImage => {
-            let bgr_img = MatImage;
-            let gray_img = new cv.Mat();
-            cv.cvtColor(bgr_img, gray_img, cv.COLOR_RGBA2GRAY, 0);
-
-            // Apply edge detection with different thresholds
-            let edges1 = new cv.Mat();
-            let edges2 = new cv.Mat();
-            cv.Canny(gray_img, edges1, 0, 255, 3);
-            cv.Canny(gray_img, edges2, 0, 145, 3);
-
-            // Subtract the edge images
-            let result = new cv.Mat();
-            cv.subtract(edges2, edges1, result);
-
-            // Detect vertical lines using morphological operations
-            let kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(1, 40));
-            let verticalLines = new cv.Mat();
-            cv.morphologyEx(result, verticalLines, cv.MORPH_OPEN, kernel);
-
-            // Find contours and extract x-coordinates
-            let contours = new cv.MatVector();
-            let hierarchy = new cv.Mat();
-            cv.findContours(verticalLines, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
-
-            let xCoordinates = [];
-            for (let i = 0; i < contours.size(); i++) {
-                let boundingRect = cv.boundingRect(contours.get(i));
-                xCoordinates.push(boundingRect.x);
-            }
-
-            // Find the contact window coordinates
-            const closeValues = findCloseValues(xCoordinates, 5, false);
-            const X1_Contact_Window = closeValues[0][0];
-            const X2_Contact_Window = closeValues.at(-1)[1];
-
-            // Crop the image based on the contact window
-            let rect = new cv.Rect(X1_Contact_Window, 0, X2_Contact_Window - X1_Contact_Window, gray_img.rows);
-            let cropped = gray_img.roi(rect);
-            let cropped_bgr = bgr_img.roi(rect);
-
-            // Apply GaussianBlur to reduce noise
-            let blurred_img = new cv.Mat();
-            cv.GaussianBlur(cropped, blurred_img, new cv.Size(9, 9), 2, 2);
-
-            // Detect circles using HoughCircles
-            let circles = new cv.Mat();
-            cv.HoughCircles(blurred_img, circles, cv.HOUGH_GRADIENT, 1, blurred_img.rows / 16, 100, 30, 10, 100);
-
-            // Extract circle centroids
-            let Xs = [], Ys = [], Radius = [];
-            for (let i = 0; i < circles.cols; ++i) {
-                Xs.push(circles.data32F[i * 3]);
-                Ys.push(circles.data32F[i * 3 + 1]);
-                Radius.push(circles.data32F[i * 3 + 2]);
-            }
-
-
-            // Find repeated x and y coordinates
-            let Xrepeated = findCloseValues(Xs, 2, true);
-            let Yrepeated = findCloseValues(Ys, 25);
-            const WidthFactor = 3 / 4;
-
-            // Calculate line height and create content sections
-            const LineHeight = Radius.at(Xs.indexOf(Xrepeated[0][0])) * 2;
-            let ContentSections = new cv.Mat.zeros(cropped_bgr.rows, cropped_bgr.cols, cropped_bgr.type());
-
-            for (let j = 0; j < Yrepeated.length; j++) {
-                let p1 = new cv.Point(parseInt(Xrepeated[0][0]), parseInt(Yrepeated[j][0]));
-                let p2 = new cv.Point(parseInt(Xrepeated.at(-1)[1]) * WidthFactor, parseInt(Yrepeated[j][0]));
-                cv.line(ContentSections, p1, p2, [255, 255, 255, 255], LineHeight);
-            }
-
-            // Apply bitwise AND to combine content sections with the cropped image
-            cv.bitwise_and(ContentSections, cropped_bgr, cropped_bgr);
-
-            // Display the result
-            cv.imshow(`ScrnShotMask${ID}`, cropped_bgr);
-            conversionImage(false, ID);
-            // Clean up
-            gray_img.delete();
-            blurred_img.delete();
-            circles.delete();
-            edges1.delete();
-            edges2.delete();
-            result.delete();
-            verticalLines.delete();
-            contours.delete();
-            hierarchy.delete();
-            ContentSections.delete();
-
-        }).catch(err => {
-            console.error('Error:', err);
-        });
-
-        ScrnShotCounter++;
-    }
-
-
-
-
-    let OlderImageBool = false;
-    let OlderImageDist = 0;
-
-    function CreateImageFolderElements(New_ScrnShtElement, ID) {
-        const ImageFolfderParent = document.getElementById('Images');
-        const ImageFolder = document.createElement('div');
-        const ScreenShotMask = document.createElement('canvas');
-        ImageFolder.setAttribute('class', 'ScreenShotFolder');
-        ImageFolder.setAttribute('id', `ScrnShotFolder${ID}`);
-        ImageFolder.setAttribute('ondblclick', `DeleteThisScrnShot('ScrnShotFolder${ID}')`);
-
-        ScreenShotMask.setAttribute('class', 'ScreenShotMask');
-        ScreenShotMask.setAttribute('id', `ScrnShotMask${ID}`);
-        ScreenShotMask.style.display = 'none';
-        ScreenShotMask.setAttribute('onclick', `ShowMask(${ID}, false)`);
-
-        New_ScrnShtElement.id = `ScrnShotImage${ID}`;
-        New_ScrnShtElement.setAttribute('class', 'ScreenShotImage');
-        New_ScrnShtElement.setAttribute('onclick', `ShowMask(${ID}, true)`);
-        ImageFolfderParent.appendChild(ImageFolder);
-        ImageFolder.appendChild(ScreenShotMask);
-        ImageFolder.appendChild(New_ScrnShtElement);
-
-    }
-
-    function DeleteThisScrnShot(ID) {
-        const ID_short = ID.slice(-1);
-        if (ID_short < ScrnShotCounter) {
-            OlderImageBool = true;
-            OlderImageDist = ScrnShotCounter - ID_short;
-        } 
-        document.getElementById(ID).remove();
-        ScrnShotCounter--;
-
-        if (ScrnShotCounter == 0) {
-            const ImagesParent = document.getElementById('Images');
-            const Placeholder = document.createElement('h2');
-            Placeholder.id = 'CrtlPlaceholder';
-            Placeholder.innerText = 'Crtl + V / Cmnd + V';
-            ImagesParent.appendChild(Placeholder);
-        }
-    }
-
-    async function CreateMaskedImageFromBlob(blob) {
-        return new Promise((resolve, reject) => {
-            let img = new Image();
-            img.src = URL.createObjectURL(blob);
-            img.onload = function () {
-                let canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                let ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, img.width, img.height);
-                let imgData = ctx.getImageData(0, 0, img.width, img.height);
-                let MatImage = cv.matFromImageData(imgData);
-                resolve(MatImage);
-            };
-            img.onerror = function (err) {
-                reject(err);
-            };
-        });
-    }
-
-    async function extractTextFromCanvas(canvas) {
-        // Convert the canvas to a data URL
-        const dataURL = canvas.toDataURL('image/png');
-
-        // Use Tesseract.js to recognize text from the image
-        const worker = Tesseract.createWorker({
-            logger: m => console.log(m) // Add logger here to see progress
-        });
-
-        await worker.load();
-        await worker.loadLanguage('eng');
-        await worker.initialize('eng');
-
-        try {
-            const { data: { text } } = await worker.recognize(dataURL);
-            return text;
-        } catch (error) {
-            console.error('Error recognizing text:', error);
-            return null;
-        } finally {
-            await worker.terminate(); // Terminate the worker after processing
-        }
-    }
-
-    function ShowMask(ID, ImgStatus) {
-        if (ImgStatus) {
-            document.getElementById(`ScrnShotImage${ID}`).style.display = 'none';
-            document.getElementById(`ScrnShotMask${ID}`).style.display = 'unset';
-        } else {
-            document.getElementById(`ScrnShotImage${ID}`).style.display = 'unset';
-            document.getElementById(`ScrnShotMask${ID}`).style.display = 'none';
-        }
-    }
-
+    
     function DisplayInfo() {
         let InfoStatus = document.getElementsByClassName('InfoBtn')[0].id;
 
@@ -405,63 +202,6 @@
             document.getElementById('InfoDisplay').style.display = 'none';
             document.getElementById('offWindowBtn').style.display = 'none';
         }
-    }
-
-    function ImageStringtoArray(Imagestr) {
-        let arr = Imagestr.split(' - ');
-
-        return arr.flatMap(str => {
-            // Split by newlines and other non-word characters, but keep names and titles together
-            return str.split(/[\n\/]+/)
-                .map(part => part.trim())
-                .filter(Boolean)
-                .filter(part => !/[©\d]/.test(part)); // Remove elements containing numbers
-        });
-    }
-
-    function conversionImage(BtnClick = flase, ID = 0) {
-        const Canvases = document.getElementsByClassName('ScreenShotMask');
-
-        if (Canvases.length === 0) {
-            return;
-        }
-
-
-        let txt = [];
-        let promises = [];
-
-        
-
-        const ImageTextContainer = document.getElementById('ImageContentText');
-        if (BtnClick) {
-            for (let i = 0; i < Canvases.length; i++) {
-                promises.push(
-                    extractTextFromCanvas(Canvases[i]).then(text => {
-                        const outputString = ImageStringtoArray(text);
-                        txt.push(outputString);
-                    })
-                );
-            }
-
-
-            Promise.all(promises).then(() => {
-                navigator.clipboard.writeText(txt.join('\n'));
-                PopUpWindow('All contact info from the screenshots are copied to your clipboard');
-            });
-        } else {
-            promises.push(
-                extractTextFromCanvas(Canvases[ID]).then(text => {
-                    const outputString = ImageStringtoArray(text);
-                    txt.push(outputString);
-                })
-            );
-            Promise.all(promises).then(() => {
-                let outputLine = ImageTextContainer.innerHTML; 
-                outputLine += "\n" + ID + "\n" + txt.join('\n');
-                ImageTextContainer.innerText = outputLine;
-            });
-        }
-        
     }
 
     function conversionText() {
@@ -480,7 +220,6 @@
                 } else if (/\d/.test(lines[i - 3]) && /[·]/.test(lines[i - 3])) {
                     infoline += lines[i - 5].split(' ')[0] + '\t' + lines[i - 5].split(' ').slice(1, lines[i - 5].split(' ').length).join(' ');
                 } else {
-                    console.log('hello');
                     infoline += lines[i - 3].split(' ')[0] + '\t' + lines[i - 3].split(' ').slice(1, lines[i - 3].split(' ').length).join(' ');
                 }
 
@@ -492,7 +231,6 @@
                 outputText += infoline + '\n';
             }    
         }
-
         navigator.clipboard.writeText(outputText);
         PopUpWindow('All contact info from the text are copied to your clipboard');
     }
@@ -510,25 +248,4 @@
                 break
         }
     }
-
-    function changeWorkModus(Modus) {
-        switch (Modus) {
-            case 1:
-                document.getElementById('Images').style.display = 'flex';
-                document.getElementById('TextModus').style.display = 'none';
-                document.getElementById('LightModus').setAttribute('ondblclick', 'changeWorkModus(2)');
-                document.getElementById('CnvrtBtn').setAttribute('onclick', 'conversionImage(true)');
-                break
-            case 2:
-                document.getElementById('Images').style.display = 'none';
-                document.getElementById('TextModus').style.display = 'flex';
-                document.getElementById('LightModus').setAttribute('ondblclick', 'changeWorkModus(1)');
-                document.getElementById('CnvrtBtn').setAttribute('onclick', 'conversionText()');
-                break
-            default:
-                break
-        }
-    }
-
-
 </script>
