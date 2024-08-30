@@ -44,36 +44,53 @@
     let counter = false;
     let TextAreaClickCount = 0;
     let AutomateStatus = false;
+    let OldTextDuplicate;
     //CHECK IF BROWSER COLOR SCHEME IS SET TO DARK: IF SO SET WEBPAGE COLOR SCHEME ALSO TO BLACK
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
         changeLightModus('dark');
     }
-
+    let v_count = 0;
+    let p_count = 0;
     window.addEventListener("paste", function (e) {
+        if (!e.clipboardData) {
+            console.error('Clipboard data is not available.');
+            return;
+        }
+
         const items = e.clipboardData.items;
-        if (items.length > 0) {
-            if (items[0].type === 'text/plain'){
-                items[0].getAsString(function (str) {
-                    document.getElementById('TextInputArea').innerHTML = str;
-                    if (AutomateStatus){
-                        conversionText();
-                    }
-                });
-            }else{
-                PopUpWindow('Copy element is not text.');
-                if (AutomateStatus){
-                    PopUpWindow('Copy element contains formatted text. Copy your SalesNav again.');
+        if (items.length >= 1 && items[0].type === 'text/plain') {
+            v_count++;
+            items[0].getAsString(function (str) {
+                p_count++;
+                document.getElementById('TextInputArea').textContent = str;
+                console.log(document.getElementById('TextInputArea').textContent);
+                checkDublicateText(str);
+                if (AutomateStatus) {
+                    conversionText();
+                    checkDublicateText(str);
                 }
-            }
-        }else{
-            PopUpWindow('Copy element is empty.');
-            //eraseText(OverRide = true);
+            });
+            console.log('v:', v_count, 'p:', p_count, 'd:', v_count - p_count);
+        } else {
+            PopUpWindow('Pasted content is not plain text or is empty.');
+            eraseText(true);
         }
     });
 
+
+    function checkDublicateText(InputText){
+        if ((OldTextDuplicate != "") && InputText == OldTextDuplicate){
+            document.getElementById('TextInputArea').style.setProperty("color", 'red');
+        }else{
+            document.getElementById('TextInputArea').style.setProperty("color", 'var(--col-txt)');
+        }
+
+        OldTextDuplicate = InputText;
+    }
+
     function eraseText(OverRide = false) {
         if (TextAreaClickCount == 0 || OverRide) {
-            document.getElementById("TextInputArea").value = "";
+            document.getElementById('TextInputArea').textContent = ' ';
         }
         TextAreaClickCount++;
     }
