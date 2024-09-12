@@ -83,14 +83,12 @@
             items[0].getAsString(function (str) {
                 p_count++;
                 document.getElementById('TextInputArea').value = str;
-                console.log(document.getElementById('TextInputArea').textContent);
                 checkDublicateText(str);
                 if (AutomateStatus) {
                     conversionText();
                     checkDublicateText(str);
                 }
             });
-            console.log('v:', v_count, 'p:', p_count, 'd:', v_count - p_count);
         } else {
             PopUpWindow('Pasted content is not plain text or is empty.');
             eraseText(true);
@@ -109,9 +107,7 @@
     }
 
     function eraseText(OverRide = false) {
-        console.log('aan');
         if (TextAreaClickCount == 0 || OverRide) {
-            console.log('werrkt');
             document.getElementById('TextInputArea').value = '';
         }
         TextAreaClickCount++;
@@ -251,17 +247,24 @@
             let infoline = ''; 
 
             if ((/in rol/.test(lines[i]) && /bedrijf/.test(lines[i])) || (/in role/.test(lines[i]) && /company/.test(lines[i]))) {
-                if (/\d/.test(lines[i - 5]) && /[·]/.test(lines[i - 5])) {
-                    infoline += lines[i - 7].split(' ')[0] + '\t' + lines[i - 7].split(' ').slice(1, lines[i - 7].split(' ').length).join(' ');
-                } else if (/\d/.test(lines[i - 4]) && /[·]/.test(lines[i - 4])) {
-                    infoline += lines[i - 6].split(' ')[0] + '\t' + lines[i - 6].split(' ').slice(1, lines[i - 6].split(' ').length).join(' ');
-                } else if (/\d/.test(lines[i - 3]) && /[·]/.test(lines[i - 3])) {
-                    infoline += lines[i - 5].split(' ')[0] + '\t' + lines[i - 5].split(' ').slice(1, lines[i - 5].split(' ').length).join(' ');
-                } else {
-                    infoline += lines[i - 3].split(' ')[0] + '\t' + lines[i - 3].split(' ').slice(1, lines[i - 3].split(' ').length).join(' ');
+                let NameDist = 1;
+
+                while (NameDist < 15) {
+                    let NameGuess = lines[i - NameDist];
+
+                    if (/\d/.test(NameGuess) && /[·]/.test(NameGuess)) {
+                        NameDist += 2;
+                        break;
+                    }
+
+                    if ((/in rol/.test(NameGuess) && /bedrijf/.test(NameGuess)) || (/in role/.test(NameGuess) && /company/.test(NameGuess))) {
+                        NameDist = 3;
+                        break;
+                    }
+                    NameDist++;
                 }
 
-
+                infoline += lines[i - NameDist].split(' ')[0] + '\t' + lines[i - NameDist].split(' ').slice(1, lines[i - NameDist].split(' ').length).join(' ');
                 infoline += '\t' + lines[i - 2].split('  ')[0] + '\t';
                 infoline += '\t' + lines[i - 2].split('  ')[1];
                 infoline += '\t' + lines[i - 2].split('  ')[1] + '\t\t';
