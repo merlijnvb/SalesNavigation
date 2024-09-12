@@ -82,7 +82,7 @@
             v_count++;
             items[0].getAsString(function (str) {
                 p_count++;
-                document.getElementById('TextInputArea').textContent = str;
+                document.getElementById('TextInputArea').value = str;
                 console.log(document.getElementById('TextInputArea').textContent);
                 checkDublicateText(str);
                 if (AutomateStatus) {
@@ -109,8 +109,10 @@
     }
 
     function eraseText(OverRide = false) {
+        console.log('aan');
         if (TextAreaClickCount == 0 || OverRide) {
-            document.getElementById('TextInputArea').textContent = ' ';
+            console.log('werrkt');
+            document.getElementById('TextInputArea').value = '';
         }
         TextAreaClickCount++;
     }
@@ -151,7 +153,6 @@
                 document.documentElement.style.setProperty("--col-border", '#F0F0F0');
                 document.documentElement.style.setProperty("--col-InfoDisplay", 'rgba(255,255,255,0.95)');
                 document.documentElement.style.setProperty("--col-InfoDisplay-sub", 'rgba(0,0,0,0.05)');
-                document.getElementById('VisualConvertBtn').style.backgroundImage = 'url(SalesNavBlack.gif)';
 
 
                 break;
