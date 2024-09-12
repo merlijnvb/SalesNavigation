@@ -123,9 +123,24 @@ h1{
     overflow: hidden;
 }
 
-#InfoDisText {
+#InfoDisHead > h2 {
+    font-size: var(--size-h2);
+    font-weight: 1000;
+    color: var(--col-popup-txt);
+    text-align: center;
+}
+
+#InfoDisHead {
     width: 50%;
-    height: 100%;
+    height: 15%;
+    position: absolute;
+    align-content: center;
+}
+
+#InfoDisText {
+    top: 15%;
+    width: 50%;
+    height: 85%;
     position: absolute;
     overflow: hidden;
     overflow-y: auto;
@@ -210,13 +225,36 @@ h1{
     font-size: var(--size-p-popup);
 }
 
-#VisualConvertBtn {
-    height: 80%;
+#feedback {
+    position: absolute;
+    top: 95%;
+    left: 50%;
+    transform: translateX(-50%);
+    font: var(--size-p-landing);
+    color: red;
+    font-weight: 1000;
+}
+
+#InfoBasics{
+    width: 100%;
+    height: 100%;
+    display: table;
+}
+#BasicsSingle {
     width: 90%;
-    margin: auto;
-    background-image: url(convert1.gif);
+    height: 40%;
+    background-image: url('SingleContact.jpg');
+    background-position: center;
     background-size: contain;
     background-repeat: no-repeat;
+    margin: auto;
+}
+#BasicsAll {
+    width: 90%;
+    height: 60%;
+    background-image: url('AllContacts.jpg');
     background-position: center;
-    overflow: hidden;
+    background-size: contain;
+    background-repeat: no-repeat;
+    margin: auto;
 }

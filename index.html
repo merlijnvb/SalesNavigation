@@ -12,24 +12,44 @@
     <span id="offWindowBtn" style="display: none;" onclick="DisplayInfo()"></span>
     <section id="InfoDisplay" style="display: none;">
         <!--INFO DISPLAY-->
+        <div id="InfoDisHead">
+            <h2>Sales Navigation Manual</h2>
+        </div>
         <div id="InfoDisText">
-            <div class="InfoContent" id="info_content_second" onmouseover="DisplayVisual(2)">
-                <h3>Basics text copy paste:</h3>
-                <p>Copy the text containing your wanted contact data. This data has to contain numbers! Numbers like: 3e, 2022, 3rd, 1st. Paste this data into this site. Click the convert button to convert your raw contact data. The resulting text will be automatically copied to your clipboard.</p>
+            <div class="InfoContent" id="info_content_second" onmouseover="DisplayVisual(1)">
+                <h3>The basics</h3>
+                <p>
+                    Select the contacts you want to convert. Make sure the Fullname and the in function time is contained in the selection. 
+                    Copy it and paste it this website. Click the convert button and you're ready to go.
+                </p>
             </div>
-            <div class="InfoContent" id="info_content_fourth" onmouseover="DisplayVisual(4)">
-                <h3>Set page theme:</h3>
-                <p>You can change your color mode by clicking on the title of the page</p>
+            <div class="InfoContent" id="info_content_fourth" onmouseover="DisplayVisual(2)">
+                <h3>Auto-convert</h3>
+                <p>
+                    By double-clicking on the convert button you change to auto-convert modus.
+                    <br><br>
+                    When enableing this modus, you'll only have to paste your data into this website and it'll automatically convert it and copy it for you.
+                    Eliminating the convert button press to convert your copied data.
+                </p>
+            </div>
+            <div class="InfoContent" id="info_content_fourth" onmouseover="DisplayVisual(3)">
+                <h3>Set page theme</h3>
+                <p>
+                    You can change your color mode by double-clicking on the title of the page
+                </p>
             </div>
         </div>
         <div id="InfoDisVis">
-            <div id="VisualConvertBtn" style="display: none">
+            <div id="InfoBasics">
+                <div id="BasicsSingle"></div>
+                <div id="BasicsAll"></div>
             </div>
         </div>
     </section>
 
     <!--INFO DISPLAY-->
     <h1 id="LightModus" onclick="changeLightModus('dark')">Sales Navigation</h1> <!-- ScrnSafe -->
+    <a id="feedback" href="https://forms.office.com/e/F7rc13nynL" target="_blank">Click me to give feedback. For when the website does not work or for other feedback.</a>
     <section id="TextModus">
         <textarea id="TextInputArea" onclick="eraseText()" ondblclick="eraseText(true)">    Ctrl + v</textarea>
     </section>
