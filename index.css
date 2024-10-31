@@ -1,4 +1,5 @@
-﻿:root {
+﻿/*SALES NAVIGATION*/
+:root {
     --col-background: #F0F0F0;
     --col-background-sub: #FFFFFF;
     --col-popup: #262626;
@@ -63,6 +64,7 @@ section {
 #Controls {
     height: 30%;
     background-color: var(--col-background-sub);
+    justify-content: space-evenly;
 }
 
 button {
